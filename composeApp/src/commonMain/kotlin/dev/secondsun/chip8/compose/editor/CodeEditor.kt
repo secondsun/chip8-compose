@@ -8,12 +8,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.multiplatform.webview.web.WebView
+import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.max
@@ -81,6 +83,16 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
 
     val webViewState =
         rememberWebViewState(url)
+    val webViewNavigator = rememberWebViewNavigator()
+//
+//    LaunchedEffect(key1 = viewModel.file.value) {
+//        if (!viewModel.file.value.isEmpty()) {
+//            val bytes = File(viewModel.file.value).readText(Charsets.UTF_8).replace("\"", "\\\"")
+//
+//            System.out.println("loading ${bytes}")
+//        }
+//    }
+    System.out.println("Recomposing")
     webViewState.webSettings.apply {
         isJavaScriptEnabled = true
         customUserAgentString =
@@ -92,7 +104,12 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
     }
     Column(Modifier.fillMaxSize()) {
         Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
-        Button(onClick = { viewModel.openFile() }) { Text("Open File") }
+        Button(onClick = { viewModel.openFile() { contents ->
+            print(contents)
+            webViewNavigator.evaluateJavaScript("updateText(\"$contents\", \"json\")") { out ->
+                print("Result $out")
+            }
+        } }) { Text("Open File") }
         val text =
             webViewState.let {
                 "${it.pageTitle ?: ""} ${it.loadingState} ${it.lastLoadedUrl ?: ""}"
@@ -100,6 +117,7 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
         Text(text)
         WebView(
             state = webViewState,
+            navigator = webViewNavigator,
             modifier = Modifier.fillMaxSize(),
         )
     }
