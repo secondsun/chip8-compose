@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.kotlin.dsl.api
 import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
@@ -6,12 +7,21 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
+val monacoConsumer = configurations.create("monacoConsumer") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+}
+
+dependencies{
+    monacoConsumer(project(":monaco", configuration = "monacoBuilder"))
 }
 
 kotlin {
@@ -111,3 +121,11 @@ compose.desktop {
         }
     }
 }
+
+
+tasks.register<Copy>("copyMonacoZip") {
+    from(configurations.named("monacoConsumer"))
+    into(layout.projectDirectory.dir("src/commonMain/composeResources/files"))
+}
+
+tasks.named("copyNonXmlValueResourcesForCommonMain").dependsOn("copyMonacoZip")

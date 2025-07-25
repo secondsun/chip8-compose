@@ -84,14 +84,8 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
     val webViewState =
         rememberWebViewState(url)
     val webViewNavigator = rememberWebViewNavigator()
-//
-//    LaunchedEffect(key1 = viewModel.file.value) {
-//        if (!viewModel.file.value.isEmpty()) {
-//            val bytes = File(viewModel.file.value).readText(Charsets.UTF_8).replace("\"", "\\\"")
-//
-//            System.out.println("loading ${bytes}")
-//        }
-//    }
+
+
     System.out.println("Recomposing")
     webViewState.webSettings.apply {
         isJavaScriptEnabled = true
@@ -110,11 +104,6 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
                 print("Result $out")
             }
         } }) { Text("Open File") }
-        val text =
-            webViewState.let {
-                "${it.pageTitle ?: ""} ${it.loadingState} ${it.lastLoadedUrl ?: ""}"
-            }
-        Text(text)
         WebView(
             state = webViewState,
             navigator = webViewNavigator,
