@@ -26,21 +26,23 @@
 <!DOCTYPE html>
 
 <html>
+
 <head>
 
-<!--	<meta http-equiv="X-UA-Compatible" content="IE=edge" />-->
+    <!--	<meta http-equiv="X-UA-Compatible" content="IE=edge" />-->
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    
+
     <style type="text/css">
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
         }
 
-		body {
-			overflow-x: hidden;
-			overflow-y: hidden;
-		}
+        body {
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
 
         #container {
             height: 100%;
@@ -58,91 +60,156 @@
 
     var editorCreatedCallback;
 
-	var foldingProvider;
-	var editorView;
-	var contentChangeListener;
-	var scrollChangeListener;
+    var foldingProvider;
+    var editorView;
+    var contentChangeListener;
+    var scrollChangeListener;
 
-	require.config({ paths: { 'vs': './package/min/vs' }});
+    require.config({ paths: { 'vs': './package/min/vs' } });
 
-	require(['vs/editor/editor.main'], function() {
+    require(['vs/editor/editor.main'], function () {
 
         monaco.languages.register({ id: "octo" });
 
-    // Register a tokens provider for the language
-    monaco.languages.setMonarchTokensProvider("octo", {
-    	controls: [
-		"return", "if", "then", "begin", "else", "end",
-		"loop", "again", "while", "jump", "jump0", ";",
-	],
-	statements: [
-		"clear", "bcd", "save", "load", "sprite", "hex", "random",
-		"delay", "key", "-key", "buzzer", "native", "hires", "lores",
-		"scroll-down", "scroll-left", "scroll-right", "bighex",
-		"exit", "saveflags", "loadflags", "long", "plane", "audio", "scroll-up", "pitch",
-	],
-
-
-   directives: [
-		":alias", ":const", ":unpack", ":next", ":org",
-		":byte", ":breakpoint", ":macro", ":calc", ":call", ":monitor",
-		":stringmode", ":assert", ":pointer",
-	],
-        tokenizer: {
-            root: [
-                [/\#.*/,   'comment' ],
-                [/([vV][0-9a-fA-F]|i)/,   'register' ],
-                [/\:[a-z]*/, { cases: {'@directives':'directive',
-                                       '@default':'identifier'},
-                      }],
-                 [/[a-z\-]+/, { cases: {'@controls':'controls',
-                                       '@statements':'statements',
-                                       '@default':'invalid'}}],
-                [/(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)/,   'assignment' ],
-                [/(==|!=|<=|>=|<|>)/,   'relational' ],
-                [/(([+\-]?0b[01]+)|([+\-]?0x[0-9a-fA-F]+)|([+\-]?\d+))/,   'number' ],
+        // Register a tokens provider for the language
+        monaco.languages.setMonarchTokensProvider("octo", {
+            default: 'invalid',
+            controls: [
+                "return", "if", "then", "begin", "else", "end",
+                "loop", "again", "while", "jump", "jump0", ";",
             ],
-        },
-    });
+            statements: [
+                "clear", "bcd", "save", "load", "sprite", "hex", "random",
+                "delay", "key", "-key", "buzzer", "native", "hires", "lores",
+                "scroll-down", "scroll-left", "scroll-right", "bighex",
+                "exit", "saveflags", "loadflags", "long", "plane", "audio", "scroll-up", "pitch",
+            ],
 
 
-    // Define a new theme that contains only rules that match this language
-    monaco.editor.defineTheme("octoTheme", {
-        base: "vs",
-        inherit: false,
-        rules: [
-            { token: "comment", foreground: "75715e" },
-            { token: "directive", foreground: "9effff"},
-            { token: "statements", foreground: "f92672" },
-            { token: "controls", foreground: "f92672" },
-            { token: "register", foreground: "fd971f" },
+            directives: [
+                ":alias", ":const", ":unpack", ":next", ":org",
+                ":byte", ":breakpoint", ":macro", ":calc", ":call", ":monitor",
+                ":stringmode", ":assert", ":pointer",
+            ],
 
-            { token: "assignment", foreground: "f92672" },
-            { token: "relational", foreground: "f92672" },
-            { token: "number", foreground: "ae81ff" },
 
-        ],
-        colors: {
-            "editor.foreground": "#f8f8f2",
-            "editor.background": "#272822",
-        },
-    });
+            // A regular expression for valid string escape sequences
+            escapes: /\\(["\\rntv0])/,
 
-		editorView = monaco.editor.create(document.getElementById('container'), {
+            tokenizer: {
+                root: [
 
-			theme: 'octoTheme',
+                    { include: '@whitespace' },
 
-			value: getCode(),
+                    [/[+\-]?0x[0-9a-fA-F]+\b/, 'number'],
+                    [/[+\-]?0b[01]+\b/, 'number'],
+                    [/[+\-]?\d+\b/, 'number'],
 
-			language: 'octo',
+                    //registers
+                    [/([vV][0-9a-fA-F]|i)\b/, { token: 'register'}],
+
+
+
+                    [/:?[\w\-]+/, {
+                        cases: {
+                            '@directives': { token: 'directive'},
+                            '@controls': { token: 'controls'},
+                            '@statements': { token: 'statements'},
+
+                        }
+                    }],
+
+                    // 6. String Literals
+                    [/"/, { token: 'string', bracket: '@open', next: '@string' }],
+
+
+                    // A standalone colon transitions to the label state to capture the name.
+                    [/:\s/, { token: 'label', next: '@label'}],
+
+                    [/(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)/, 'assignment'],
+
+
+
+                    [/(==|!=|<=|>=|<|>)/, 'relational'],
+
+
+                ],
+                // State for handling comments and whitespace
+                whitespace: [
+                    [/[ \t\r\n]+/, ''],
+                    [/#.*$/, 'comment'],
+                ],
+
+
+                // State for handling content within a string literal
+                string: [
+                    [/[^\\"]+/, 'string'],
+                    [/@escapes/, 'string'],
+                    [/"/, { token: 'string', bracket: '@close', next: '@pop' }]
+                ],
+
+                // State for capturing the name of a label after a standalone ":"
+                label: [
+                    //[/\s+/, ''], // ignore whitespace after the colon
+                    [/[^\s]+/, { token: 'label', next: '@pop' }]
+                ],
+
+
+            },
+        });
+
+
+        // Define a new theme that contains only rules that match this language
+        monaco.editor.defineTheme("octoTheme", {
+            base: "vs",
+            inherit: false,
+            rules: [
+                { token: "comment", foreground: "75715e" },
+                { token: "directive", foreground: "9effff" },
+                { token: "statements", foreground: "f92672" },
+                { token: "controls", foreground: "f92672" },
+                { token: "register", foreground: "fd971f" },
+
+                { token: "assignment", foreground: "f92672" },
+                { token: "relational", foreground: "f92672" },
+                { token: "number", foreground: "ae81ff" },
+                { token: "label", foreground: "a6e22e" },
+                { token: "string", foreground: "e6db74" }
+
+            ],
+            colors: {
+                "editor.foreground": "#f8f8f2",
+                "editor.background": "#272822",
+                "editorLineNumber.foreground": "#d0d0d0",
+                "editorLineNumber.activeForeground": "#d0d0d0",
+                "editorCursor.foreground": "#d0d0d0",
+
+            },
+        });
+
+        monaco.editor.create(document.getElementById("container"), {
+            theme: "octoTheme",
+            value: getCode(),
+            language: "octo",
+            minimap: { enabled: false },
+            renderLineHighlight: 'none'
+        });
+
+        editorView = monaco.editor.create(document.getElementById('container'), {
+
+            theme: 'octoTheme',
+
+            value: getCode(),
+            renderLineHighlight: 'none',
+            language: 'octo',
 
             automaticLayout: true,
 
             roundedSelection: false,
 
-			mouseWheelScrollSensitivity: 0.2,
+            mouseWheelScrollSensitivity: 1,
 
-			scrollBeyondLastLine: false,
+            scrollBeyondLastLine: false,
 
             scrollbar: {
                 // Subtle shadows to the left & top. Defaults to true.
@@ -166,20 +233,20 @@
                 horizontalScrollbarSize: 17,
                 arrowSize: 30,
 
-				alwaysConsumeMouseWheel: false
-	        },
-	        minimap: {enabled:false}
+                alwaysConsumeMouseWheel: false
+            },
+            minimap: { enabled: false }
 
         });
 
         // overrides the context menu 'copy'
         let copyAction = editorView.getAction('editor.action.clipboardCopyAction');
 
-       // overrides the context menu 'cut'
+        // overrides the context menu 'cut'
         let cutAction = editorView.getAction('editor.action.clipboardCutAction');
         cutAction.run = function () {
-           clipboardBridge.copy(editorView.getSelection());
-           editorView.trigger('', 'cut');
+            clipboardBridge.copy(editorView.getSelection());
+            editorView.trigger('', 'cut');
         };
 
         // adds 'paste' into the context menu
@@ -196,23 +263,23 @@
             }
         });
 
-        if(editorCreatedCallback!=null) {
+        if (editorCreatedCallback != null) {
             editorCreatedCallback.apply([editorView]);
         }
 
-		editorView.onDidChangeModelContent((ev) => {
-            if(contentChangeListener!=null) {
-               contentChangeListener.apply([ev]);
+        editorView.onDidChangeModelContent((ev) => {
+            if (contentChangeListener != null) {
+                contentChangeListener.apply([ev]);
             }
         });
 
-		editorView.onDidScrollChange((ev) => {
-            if(scrollChangeListener!=null) {
-               scrollChangeListener.apply([ev]);
+        editorView.onDidScrollChange((ev) => {
+            if (scrollChangeListener != null) {
+                scrollChangeListener.apply([ev]);
             }
         });
 
-		// UNDO-/REDO functionality
+        // UNDO-/REDO functionality
         const initialVersion = editorView.getModel().getAlternativeVersionId();
         let currentVersion = initialVersion;
         let lastVersion = initialVersion;
@@ -250,7 +317,7 @@
             currentVersion = versionId;
         });
 
-	});
+    });
 
     function undo() {
         editorView.trigger('aaaa', 'undo', 'aaaa');
@@ -262,13 +329,13 @@
         editorView.focus();
     }
 
-	function getCode() {
+    function getCode() {
 
-		return [
-			''
-		].join('\n');
+        return [
+            ''
+        ].join('\n');
 
-	}
+    }
 
     // change the text without losing document history
     function updateText(text) {
@@ -280,10 +347,9 @@
         editorView.pushUndoStop();
     }
 
-	function getEditorView() {
-		return editorView;
+    function getEditorView() {
+        return editorView;
     }
-
 
 
 </script>
