@@ -83,12 +83,9 @@ fun CodeEditor(port: Int) {
 @Composable
 fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEditorViewModel() }) {
 
-
-
     val webViewState =
         rememberWebViewState(url)
     val webViewNavigator = rememberWebViewNavigator()
-
 
     System.out.println("Recomposing")
     webViewState.webSettings.apply {
@@ -100,6 +97,7 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
             safeBrowsingEnabled = true
         }
     }
+
     Column(Modifier.fillMaxSize().background(Color(0xff272822))) {
         Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
         Button(onClick = { viewModel.openFile() { contents ->

@@ -241,6 +241,9 @@
 
         // overrides the context menu 'copy'
         let copyAction = editorView.getAction('editor.action.clipboardCopyAction');
+        copyAction.run = function () {
+           clipboardBridge.copy(editorView.getSelection());
+        };
 
         // overrides the context menu 'cut'
         let cutAction = editorView.getAction('editor.action.clipboardCutAction');
