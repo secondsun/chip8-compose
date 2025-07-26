@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.file.Path
 import kotlin.math.max
 
 
@@ -81,6 +82,7 @@ fun CodeEditor(port: Int) {
 fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEditorViewModel() }) {
 
 
+
     val webViewState =
         rememberWebViewState(url)
     val webViewNavigator = rememberWebViewNavigator()
@@ -100,7 +102,7 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
         Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
         Button(onClick = { viewModel.openFile() { contents ->
             print(contents)
-            webViewNavigator.evaluateJavaScript("updateText(\"$contents\", \"json\")") { out ->
+            webViewNavigator.evaluateJavaScript("updateText(\"$contents\", \"octo\")") { out ->
                 print("Result $out")
             }
         } }) { Text("Open File") }

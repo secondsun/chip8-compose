@@ -39,18 +39,22 @@ fun main() =
             scope.launch {
                 val bytes = Res.readBytes("files/monaco.zip")
                 System.out.println("Unzipping")
-                val tempDirectory = FileKit.filesDir
+                val tempDirectory = File(FileKit.filesDir.file, "monaco")
+                if (!tempDirectory.exists()) {
+                    tempDirectory.mkdirs()
+                }
+
                 ZipInputStream(ByteArrayInputStream(bytes)).use { zipInputStream ->
                     var entry = zipInputStream.nextEntry
                     while (entry != null) {
 
                         if (entry.isDirectory) {
-                            val directory = File(tempDirectory.file, entry.name)
+                            val directory = File(tempDirectory, entry.name)
                             if(!directory.exists()) {
                                 directory.mkdirs()
                             }
                         } else {
-                            val file = File(tempDirectory.file, entry.name)
+                            val file = File(tempDirectory, entry.name)
                             FileOutputStream(file).use {
                                 it.write(zipInputStream.readAllBytes())
                             }
@@ -59,9 +63,10 @@ fun main() =
                     }
 
                 }
-                System.out.println("Unzipped to ${tempDirectory.file.path} ")
+                System.out.println("Unzipped to ${tempDirectory.path} ")
                 val address = InetSocketAddress(0)
-                val path = Path.of(tempDirectory.file.path, "monaco")
+                val path = Path.of(tempDirectory.path)
+
                 val server = SimpleFileServer.createFileServer(address, path, SimpleFileServer.OutputLevel.VERBOSE)
                 server.start()
 

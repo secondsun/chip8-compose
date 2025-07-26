@@ -52,7 +52,7 @@
 <body>
 <div id="container"></div>
 
-<script src="packagein/vs/loader.js"></script>
+<script src="package/min/vs/loader.js"></script>
 
 <script>
 
@@ -67,19 +67,79 @@
 
 	require(['vs/editor/editor.main'], function() {
 
+        monaco.languages.register({ id: "octo" });
+
+    // Register a tokens provider for the language
+    monaco.languages.setMonarchTokensProvider("octo", {
+    	controls: [
+		"return", "if", "then", "begin", "else", "end",
+		"loop", "again", "while", "jump", "jump0", ";",
+	],
+	statements: [
+		"clear", "bcd", "save", "load", "sprite", "hex", "random",
+		"delay", "key", "-key", "buzzer", "native", "hires", "lores",
+		"scroll-down", "scroll-left", "scroll-right", "bighex",
+		"exit", "saveflags", "loadflags", "long", "plane", "audio", "scroll-up", "pitch",
+	],
+
+
+   directives: [
+		":alias", ":const", ":unpack", ":next", ":org",
+		":byte", ":breakpoint", ":macro", ":calc", ":call", ":monitor",
+		":stringmode", ":assert", ":pointer",
+	],
+        tokenizer: {
+            root: [
+                [/\#.*/,   'comment' ],
+                [/^([vV][0-9a-fA-F]|i)$/,   'register' ],
+                [/\:[a-z]*/, { cases: {'@directives':'directive',
+                                       '@default':'identifier'},
+                      }],
+                 [/[a-z\-]+/, { cases: {'@controls':'controls',
+                                       '@statements':'statements',
+                                       '@default':'invalid'}}],
+                [/^(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)$/,   'assignment' ],
+                [/^(==|!=|<=|>=|<|>)$/,   'relational' ],
+                [/^(([+\-]?0b[01]+)|([+\-]?0x[0-9a-fA-F]+)|([+\-]?\d+))$/,   'number' ],
+            ],
+        },
+    });
+
+
+    // Define a new theme that contains only rules that match this language
+    monaco.editor.defineTheme("octoTheme", {
+        base: "vs",
+        inherit: false,
+        rules: [
+            { token: "comment", foreground: "75715e" },
+            { token: "directive", foreground: "9effff"},
+            { token: "statements", foreground: "f92672" },
+            { token: "controls", foreground: "f92672" },
+            { token: "register", foreground: "fd971f" },
+
+            { token: "assignment", foreground: "f92672" },
+            { token: "relational", foreground: "f92672" },
+            { token: "number", foreground: "ae81ff" },
+
+        ],
+        colors: {
+            "editor.foreground": "#000000",
+        },
+    });
+
 		editorView = monaco.editor.create(document.getElementById('container'), {
 
-			//theme: 'mylangTheme',
+			theme: 'octoTheme',
 
 			value: getCode(),
 
-			//language: 'mylang',
+			language: 'octo',
 
             automaticLayout: true,
 
             roundedSelection: false,
 
-			mouseWheelScrollSensitivity: 0.1,
+			mouseWheelScrollSensitivity: 0.2,
 
 			scrollBeyondLastLine: false,
 
@@ -113,9 +173,6 @@
 
         // overrides the context menu 'copy'
         let copyAction = editorView.getAction('editor.action.clipboardCopyAction');
-        copyAction.run = function () {
-           clipboardBridge.copy(editorView.getSelection());
-        };
 
        // overrides the context menu 'cut'
         let cutAction = editorView.getAction('editor.action.clipboardCutAction');
@@ -225,6 +282,8 @@
 	function getEditorView() {
 		return editorView;
     }
+
+
 
 </script>
 

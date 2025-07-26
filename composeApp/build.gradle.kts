@@ -20,7 +20,7 @@ plugins {
     alias(libs.plugins.composeHotReload)
 }
 
-dependencies{
+dependencies {
     monacoConsumer(project(":monaco", configuration = "monacoBuilder"))
 }
 

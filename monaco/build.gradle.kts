@@ -5,7 +5,7 @@ val monacoBuilder : NamedDomainObjectProvider<Configuration> by configurations.r
 
 val zipTask = tasks.register<Zip>("build") {
     from("src")
-    include("*")
+    include("**/*")
     archiveFileName.set("monaco.zip")
     destinationDirectory.set(project.layout.buildDirectory)
 }
