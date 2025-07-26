@@ -91,16 +91,16 @@
         tokenizer: {
             root: [
                 [/\#.*/,   'comment' ],
-                [/^([vV][0-9a-fA-F]|i)$/,   'register' ],
+                [/([vV][0-9a-fA-F]|i)/,   'register' ],
                 [/\:[a-z]*/, { cases: {'@directives':'directive',
                                        '@default':'identifier'},
                       }],
                  [/[a-z\-]+/, { cases: {'@controls':'controls',
                                        '@statements':'statements',
                                        '@default':'invalid'}}],
-                [/^(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)$/,   'assignment' ],
-                [/^(==|!=|<=|>=|<|>)$/,   'relational' ],
-                [/^(([+\-]?0b[01]+)|([+\-]?0x[0-9a-fA-F]+)|([+\-]?\d+))$/,   'number' ],
+                [/(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)/,   'assignment' ],
+                [/(==|!=|<=|>=|<|>)/,   'relational' ],
+                [/(([+\-]?0b[01]+)|([+\-]?0x[0-9a-fA-F]+)|([+\-]?\d+))/,   'number' ],
             ],
         },
     });
@@ -123,7 +123,8 @@
 
         ],
         colors: {
-            "editor.foreground": "#000000",
+            "editor.foreground": "#f8f8f2",
+            "editor.background": "#272822",
         },
     });
 

@@ -1,11 +1,13 @@
 package dev.secondsun.chip8.compose.editor
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
@@ -98,7 +100,7 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
             safeBrowsingEnabled = true
         }
     }
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().background(Color(0xff272822))) {
         Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
         Button(onClick = { viewModel.openFile() { contents ->
             print(contents)
