@@ -1,10 +1,15 @@
 package dev.secondsun.chip8.compose
 
 import androidx.compose.material.Text
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -13,26 +18,27 @@ import com.google.dynamiccolor.DynamicScheme
 import com.google.hct.Hct
 import com.google.scheme.SchemeTonalSpot
 import com.sun.net.httpserver.SimpleFileServer
+import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.CodeEditor
+import dev.secondsun.chip8.compose.kcef.KCEFState
+import dev.secondsun.chip8.compose.kcef.LocalKCEF
 import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.createDirectories
-import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.filesDir
 import jthemedetecor.OsThemeDetector
+import jthemedetecor.consumers.DarkModeConsumer
+import jthemedetecor.consumers.PrimaryColorConsumer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.skia.skottie.Logger
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.net.InetSocketAddress
 import java.nio.file.Path
-import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
-import kotlin.coroutines.CoroutineContext
+import kotlin.math.max
 
 fun main() =
     application {
@@ -86,6 +92,7 @@ fun main() =
 
         startServer()
 
+        val scope = rememberCoroutineScope()
 
         val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
         var isDarkMode by remember { mutableStateOf(detector.isDark) }
@@ -95,14 +102,73 @@ fun main() =
         }
 
 
+        // Monitor theme changes
+        detector.registerListener(scope, DarkModeConsumer({ isDark ->
+            if (isDark != isDarkMode) {
+                isDarkMode = isDark
+                scheme = SchemeTonalSpot(Hct.fromInt(primaryColor.rgb), isDarkMode, 0.0)
+            }
+        }))
+
+        detector.registerListener(scope, PrimaryColorConsumer({ color ->
+            if (primaryColor != color) {
+                primaryColor = color
+                scheme = SchemeTonalSpot(Hct.fromInt(primaryColor.rgb), isDarkMode, 0.0)
+            }
+        }))
+
+
+        var restartRequired by remember { mutableStateOf(false) }
+        var downloading by remember { mutableStateOf(0F) }
+        var initialized by remember { mutableStateOf(false) }
+
+
+
+        val kcefState = KCEFState(restartRequired, downloading, initialized)
+
+
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.Default) {
+                KCEF.init(builder = {
+                    installDir(File("kcef-bundle"))
+                    progress {
+                        onDownloading {
+                            downloading = max(it, 0F)
+                        }
+                        onInitialized {
+                            initialized = true
+                        }
+                    }
+                    settings {
+                        cachePath = File("cache").absolutePath
+                    }
+                }, onError = {
+                    it!!.printStackTrace()
+                }, onRestartRequired = {
+                    restartRequired = true
+                })
+            }
+        }
+
+
         Window(
             onCloseRequest = ::exitApplication,
             title = "Chip8-Compoze",
         ) {
             when (httpPort.value) {
                 0 -> Text("Waiting")
-                else -> CodeEditor(httpPort.value)
+                else ->
+                    CompositionLocalProvider(LocalKCEF provides kcefState) {
+                        CodeEditor(scheme = scheme, port = httpPort.value)
+                    }
             }
 
+        }
+
+
+        DisposableEffect(Unit) {
+            onDispose {
+                KCEF.disposeBlocking()
+            }
         }
     }
