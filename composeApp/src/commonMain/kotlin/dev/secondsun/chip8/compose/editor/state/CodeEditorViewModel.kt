@@ -1,39 +1,67 @@
 package dev.secondsun.chip8.compose.editor.state
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.InternalComposeApi
-import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.absoluteFile
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.path
+import io.github.vinceglb.filekit.exists
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.coroutines.CoroutineContext
+import java.io.FileInputStream
 import kotlin.text.Charsets.UTF_8
 
 class CodeEditorViewModel : ViewModel() {
 
+
     private var _file = mutableStateOf("")
     val file = _file
+
+    /**
+     * Opens the file and returns the string contents. Will remove UTF-8 BOM marks
+     *
+     */
     fun openFile(block: (String) -> Unit = {}) {
         viewModelScope.launch {
+
             val file = FileKit.openFilePicker()
-            if (file != null) {
-                _file.value = file.absolutePath()
-            }
-            if (!_file.value.isEmpty()) {
-                val string = File(_file.value).readText(UTF_8).replace("\"","\\\"").replace("\n","\\n")
-                block(string)
+
+            withContext(Dispatchers.IO) {
+                if (file != null && file.exists()) {
+                    _file.value = file.absolutePath()
+
+
+                    val javaFile = File(_file.value)
+                    //Start reading file
+                    FileInputStream(javaFile).use { fis ->
+
+                        //Remove UTF-8 Byte order marks (if present)
+                        var byteArray = fis.readAllBytes()
+                        if (byteArray.size > 3) {
+                            if (byteArray[0] == 0xef.toByte() && byteArray[1] == 0xbb.toByte() && byteArray[2] == 0xbf.toByte()) {
+                                byteArray = byteArray.drop(3).toByteArray()
+                            }
+                        }
+
+                        //convert to string and escape backticks
+                        val string = String(bytes = byteArray, UTF_8)
+
+                        withContext(Dispatchers.Main) {
+                            block(string)
+                        }
+
+                    }
+                }
+
             }
         }
 
     }
+
+
 }
 
 

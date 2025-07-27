@@ -101,7 +101,7 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
     Column(Modifier.fillMaxSize().background(Color(0xff272822))) {
         Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
         Button(onClick = { viewModel.openFile() { contents ->
-            webViewNavigator.evaluateJavaScript("updateText(\"$contents\", \"octo\")") { out ->
+            webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")") { out ->
                 print("Result $out")
             }
         } }) { Text("Open File") }
