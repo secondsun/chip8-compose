@@ -1,11 +1,18 @@
 package dev.secondsun.chip8.compose.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -14,19 +21,16 @@ import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.openFilePicker
+import jthemedetecor.OsThemeDetector
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Path
 import kotlin.math.max
 
 
 /**
  *
- * CodeEditor is a webview that runs Monaco, the CS Code code engine. It connects to an embedded http server and
+ * CodeEditor is a webview that runs Monaco, the VS Code code engine. It connects to an embedded http server and
  * loads the monaco instance there.
  *
  * @param port This is the port on the local machine that the kcef browser will connect to.
@@ -63,6 +67,14 @@ fun CodeEditor(port: Int) {
         }
     }
 
+    val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
+    var isDarkMode by remember { mutableStateOf(detector.isDark) }
+    var primaryColor by remember { mutableStateOf(detector.primaryColor) }
+    var scheme: DynamicScheme by remember(key1 = { (if (isDarkMode) 0 else 1) * 3 + primaryColor.rgb }) {
+        mutableStateOf(SchemeTonalSpot(Hct.fromInt(primaryColor.rgb), isDarkMode, 0.0))
+    }
+
+
     if (restartRequired) {
         Text(text = "Restart required.")
     } else {
@@ -98,17 +110,55 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
         }
     }
 
-    Column(Modifier.fillMaxSize().background(Color(0xff272822))) {
-        Button(onClick = { webViewState.nativeWebView.reload() }) { Text("Reload") }
-        Button(onClick = { viewModel.openFile() { contents ->
-            webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")") { out ->
-                print("Result $out")
+    @Composable
+    fun ControlRow(modifier: Modifier = Modifier) {
+
+        var debugMenuOpened by remember { mutableStateOf(false) }
+        Box() {
+            Row(modifier) {
+                IconButton(onClick = { debugMenuOpened = !debugMenuOpened }) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Open Debug Menu"
+                    )
+                }
+
+                IconButton(onClick = {
+                    viewModel.openFile { contents ->
+                        webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
+                    }
+                }) {
+                    Icon(
+                        Icons.Default.FileOpen,
+                        contentDescription = "Open File"
+                    )
+                }
+
             }
-        } }) { Text("Open File") }
+            if (debugMenuOpened) {
+                Row(modifier.background(Color.Black)) {
+
+                    IconButton(onClick = {debugMenuOpened = false}) {
+                        Icon(Icons.Default.Close, "Close")
+                    }
+
+                    Button(onClick = { webViewState.nativeWebView.reload(); debugMenuOpened = false }) {
+                        Text("Reload")
+                    }
+                }
+
+            }
+        }
+    }
+
+    Column(Modifier.fillMaxSize().background(Color(0xff272822))) {
+        ControlRow(modifier = Modifier.fillMaxWidth().wrapContentHeight())
         WebView(
             state = webViewState,
             navigator = webViewNavigator,
             modifier = Modifier.fillMaxSize(),
         )
     }
+
+
 }

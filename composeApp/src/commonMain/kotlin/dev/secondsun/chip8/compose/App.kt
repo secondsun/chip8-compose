@@ -13,26 +13,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import chip8_compose.composeapp.generated.resources.Res
 import chip8_compose.composeapp.generated.resources.compose_multiplatform
 
 @Composable
-@Preview
 fun App() {
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
+        var showUI by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
                 .safeContentPadding()
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Button(onClick = { showContent = !showContent }) {
+            Button(onClick = { showUI = !showUI }) {
                 Text("Click me!")
             }
-            AnimatedVisibility(showContent) {
+            AnimatedVisibility(showUI) {
                 val greeting = remember { Greeting().greet() }
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(painterResource(Res.drawable.compose_multiplatform), null)

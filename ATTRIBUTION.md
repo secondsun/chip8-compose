@@ -18,4 +18,10 @@ Provided by Jetbrains under the [Apache 2.0 License](https://www.apache.org/lice
 Provided by KevinnZou under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 # [FileKit](https://github.com/vinceglb/FileKit)
-Provided by vinceglb  and is licensed under the [MIT license](https://mit-license.org/)
+Provided by vinceglb and is licensed under the [MIT license](https://mit-license.org/)
+
+# [J System Theme Detector](https://github.com/Dansoftowner/jSystemThemeDetector/)
+Provided by Dansoftowner under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0.txt)
+
+# [Material Color Utils](https://github.com/material-foundation/material-color-utilities)
+Provided by Google under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0.txt)

@@ -29,6 +29,7 @@ import kotlin.coroutines.CoroutineContext
 fun main() =
     application {
         FileKit.init("Chip8-Compose")
+
         val httpPort = mutableIntStateOf(0)
 
         fun startServer() {
