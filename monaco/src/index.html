@@ -187,150 +187,14 @@
             },
         });
 
-        monaco.editor.create(document.getElementById("container"), {
+        editorView = monaco.editor.create(document.getElementById("container"), {
             theme: "octoTheme",
+            automaticLayout: true,
             value: getCode(),
             language: "octo",
             minimap: { enabled: false },
             renderLineHighlight: 'none'
         });
-
-        editorView = monaco.editor.create(document.getElementById('container'), {
-
-            theme: 'octoTheme',
-
-            value: getCode(),
-            renderLineHighlight: 'none',
-            language: 'octo',
-
-            automaticLayout: true,
-
-            roundedSelection: false,
-
-            mouseWheelScrollSensitivity: 1,
-
-            scrollBeyondLastLine: false,
-
-            scrollbar: {
-                // Subtle shadows to the left & top. Defaults to true.
-                useShadows: true,
-
-                // Render vertical arrows. Defaults to false.
-                verticalHasArrows: true,
-                // Render horizontal arrows. Defaults to false.
-                horizontalHasArrows: true,
-
-                // Render vertical scrollbar.
-                // Accepted values: 'auto', 'visible', 'hidden'.
-                // Defaults to 'auto'
-                vertical: 'auto',
-                // Render horizontal scrollbar.
-                // Accepted values: 'auto', 'visible', 'hidden'.
-                // Defaults to 'auto'
-                horizontal: 'auto',
-
-                verticalScrollbarSize: 17,
-                horizontalScrollbarSize: 17,
-                arrowSize: 30,
-
-                alwaysConsumeMouseWheel: false
-            },
-            minimap: { enabled: false }
-
-        });
-
-        // overrides the context menu 'copy'
-        let copyAction = editorView.getAction('editor.action.clipboardCopyAction');
-        copyAction.run = function () {
-           clipboardBridge.copy(editorView.getSelection());
-        };
-
-        // overrides the context menu 'cut'
-        let cutAction = editorView.getAction('editor.action.clipboardCutAction');
-        cutAction.run = function () {
-            clipboardBridge.copy(editorView.getSelection());
-            editorView.trigger('', 'cut');
-        };
-
-        // adds 'paste' into the context menu
-        editorView.addAction({
-            id: "editor.action.clipboardPasteAction",
-            label: "Paste",
-            contextMenuGroupId: "9_cutcopypaste",
-            contextMenuOrder: 3,
-            run: (editor) => {
-                let position = editor.getPosition();
-                let newPosition = clipboardBridge.paste(editor.getSelection(), position);
-                editor.setPosition(newPosition);
-                editor.focus();
-            }
-        });
-
-        if (editorCreatedCallback != null) {
-            editorCreatedCallback.apply([editorView]);
-        }
-
-        editorView.onDidChangeModelContent((ev) => {
-            if (contentChangeListener != null) {
-                contentChangeListener.apply([ev]);
-            }
-        });
-
-        editorView.onDidScrollChange((ev) => {
-            if (scrollChangeListener != null) {
-                scrollChangeListener.apply([ev]);
-            }
-        });
-
-        // UNDO-/REDO functionality
-        const initialVersion = editorView.getModel().getAlternativeVersionId();
-        let currentVersion = initialVersion;
-        let lastVersion = initialVersion;
-        editorView.onDidChangeModelContent(e => {
-            const versionId = editorView.getModel().getAlternativeVersionId();
-            // undoing
-            if (versionId < currentVersion) {
-                // REDO AVAILABLE
-                // enableRedoButton();
-
-                // no more undo possible
-                if (versionId === initialVersion) {
-                    // UNDO NOT AVAILABLE
-                    // disableUndoButton();
-                }
-            } else {
-                // redoing
-                if (versionId <= lastVersion) {
-                    // redoing the last change
-                    if (versionId == lastVersion) {
-                        // REDO NOT AVAILABLE
-                        // disableRedoButton();
-                    }
-                } else { // adding new change, disable redo when adding new changes
-                    // REDO NOT AVAILABLE
-                    // disableRedoButton();
-                    if (currentVersion > lastVersion) {
-                        lastVersion = currentVersion;
-                    }
-                }
-
-                // UNDO AVAILABLE
-                // enableUndoButton();
-            }
-            currentVersion = versionId;
-        });
-
-    });
-
-    function undo() {
-        editorView.trigger('aaaa', 'undo', 'aaaa');
-        editorView.focus();
-    }
-
-    function redo() {
-        editorView.trigger('aaaa', 'redo', 'aaaa');
-        editorView.focus();
-    }
 
     function getCode() {
 
@@ -339,6 +203,9 @@
         ].join('\n');
 
     }
+
+
+});
 
     // change the text without losing document history
     function updateText(text) {
@@ -353,8 +220,6 @@
     function getEditorView() {
         return editorView;
     }
-
-
 </script>
 
 </body>
