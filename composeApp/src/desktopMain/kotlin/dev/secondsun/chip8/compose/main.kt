@@ -1,16 +1,24 @@
 package dev.secondsun.chip8.compose
 
 import androidx.compose.material.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import chip8_compose.composeapp.generated.resources.Res
+import com.google.dynamiccolor.DynamicScheme
+import com.google.hct.Hct
+import com.google.scheme.SchemeTonalSpot
 import com.sun.net.httpserver.SimpleFileServer
 import dev.secondsun.chip8.compose.editor.CodeEditor
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.createDirectories
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.filesDir
+import jthemedetecor.OsThemeDetector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -77,6 +85,15 @@ fun main() =
         }
 
         startServer()
+
+
+        val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
+        var isDarkMode by remember { mutableStateOf(detector.isDark) }
+        var primaryColor by remember { mutableStateOf(detector.primaryColor) }
+        var scheme: DynamicScheme by remember(key1 = { (if (isDarkMode) 0 else 1) * 3 + primaryColor.rgb }) {
+            mutableStateOf(SchemeTonalSpot(Hct.fromInt(primaryColor.rgb), isDarkMode, 0.0))
+        }
+
 
         Window(
             onCloseRequest = ::exitApplication,

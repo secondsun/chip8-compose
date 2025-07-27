@@ -11,6 +11,13 @@ filekit = "0.10.0-beta04"
 kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 compose-webview-multiplatform = "2.0.0"
+slf4j = "1.7.32"
+jna = "5.17.0"
+jfa = "1.2.0"
+oshi = "5.8.6"
+versioncompare = "1.4.1"
+jetbrains-annotations = "22.0.0"
+
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -22,6 +29,14 @@ kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-s
 compose-webview-multiplatform   = {module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "compose-webview-multiplatform"}
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+jna-jpms = { group = "net.java.dev.jna", name = "jna-jpms", version.ref = "jna" }
+jna-platform-jpms = { group = "net.java.dev.jna", name = "jna-platform-jpms", version.ref = "jna" }
+
+jfa = { group = "de.jangassen", name = "jfa", version.ref = "jfa" }
+oshi-core = { group = "com.github.oshi", name = "oshi-core", version.ref = "oshi" }
+versioncompare = { group = "io.github.g00fy2", name = "versioncompare", version.ref = "versioncompare" }
+jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 
 
 [plugins]

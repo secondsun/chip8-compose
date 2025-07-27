@@ -57,6 +57,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
+            implementation(project(":material-color-utils"))
 
         }
         commonTest.dependencies {
@@ -65,6 +66,20 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+
+            implementation(project(":material-color-utils"))
+
+            // jSystemThemeDetector dependencies
+            implementation(libs.slf4j.api)
+            implementation(libs.jna.jpms)
+            implementation(libs.jna.platform.jpms)
+            //This should be a version catalog, but is broken for some reason.
+            implementation ("de.jangassen:jfa:1.2.0") {exclude(group = "net.java.dev.jna", module = "jna")}
+            implementation(libs.oshi.core)
+            implementation(libs.versioncompare)
+            implementation(libs.jetbrains.annotations)
+
+
         }
     }
 }

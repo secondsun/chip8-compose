@@ -20,7 +20,6 @@ import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
-import jthemedetecor.OsThemeDetector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -64,13 +63,6 @@ fun CodeEditor(port: Int) {
                 restartRequired = true
             })
         }
-    }
-
-    val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
-    var isDarkMode by remember { mutableStateOf(detector.isDark) }
-    var primaryColor by remember { mutableStateOf(detector.primaryColor) }
-    var scheme: DynamicScheme by remember(key1 = { (if (isDarkMode) 0 else 1) * 3 + primaryColor.rgb }) {
-        mutableStateOf(SchemeTonalSpot(Hct.fromInt(primaryColor.rgb), isDarkMode, 0.0))
     }
 
 
