@@ -1,4 +1,4 @@
-package dev.secondsun.chip8.compose.kcef
+package dev.secondsun.chip8.compose.localproviders
 import androidx.compose.runtime.compositionLocalOf
 
 

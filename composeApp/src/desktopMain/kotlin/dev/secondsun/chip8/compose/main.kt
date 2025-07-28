@@ -4,7 +4,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,8 +19,10 @@ import com.google.scheme.SchemeTonalSpot
 import com.sun.net.httpserver.SimpleFileServer
 import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.CodeEditor
-import dev.secondsun.chip8.compose.kcef.KCEFState
-import dev.secondsun.chip8.compose.kcef.LocalKCEF
+import dev.secondsun.chip8.compose.localproviders.DarkModeState
+import dev.secondsun.chip8.compose.localproviders.KCEFState
+import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
+import dev.secondsun.chip8.compose.localproviders.LocalKCEF
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.filesDir
 import jthemedetecor.OsThemeDetector
@@ -44,7 +45,7 @@ fun main() =
     application {
         FileKit.init("Chip8-Compose")
 
-        val httpPort = mutableIntStateOf(0)
+        var httpPort by remember { mutableIntStateOf(0) }
 
         fun startServer() {
 
@@ -85,13 +86,10 @@ fun main() =
                 val server = SimpleFileServer.createFileServer(address, path, SimpleFileServer.OutputLevel.VERBOSE)
                 server.start()
 
-                httpPort.value = server.address.port
+                httpPort = server.address.port
             }
 
         }
-
-        startServer()
-
         val scope = rememberCoroutineScope()
 
         val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
@@ -125,9 +123,11 @@ fun main() =
 
 
         val kcefState = KCEFState(restartRequired, downloading, initialized)
+        val darkModeState = DarkModeState(isDarkMode)
 
 
         LaunchedEffect(Unit) {
+            startServer()
             withContext(Dispatchers.Default) {
                 KCEF.init(builder = {
                     installDir(File("kcef-bundle"))
@@ -155,11 +155,14 @@ fun main() =
             onCloseRequest = ::exitApplication,
             title = "Chip8-Compoze",
         ) {
-            when (httpPort.value) {
+            when (httpPort) {
                 0 -> Text("Waiting")
                 else ->
                     CompositionLocalProvider(LocalKCEF provides kcefState) {
-                        CodeEditor(scheme = scheme, port = httpPort.value)
+                        CompositionLocalProvider(LocalDarkMode provides darkModeState) {
+                            println("Recomposed CompositionLocalProvider")
+                            CodeEditor(scheme = scheme, port = httpPort)
+                        }
                     }
             }
 

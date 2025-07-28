@@ -22,15 +22,9 @@ import com.google.dynamiccolor.DynamicScheme
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
-import dev.datlag.kcef.KCEF
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
-import dev.secondsun.chip8.compose.editor.toMaterialScheme
-import dev.secondsun.chip8.compose.kcef.LocalKCEF
-import jdk.internal.org.jline.utils.Colors
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
-import kotlin.math.max
+import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
+import dev.secondsun.chip8.compose.localproviders.LocalKCEF
 
 
 /**
@@ -54,7 +48,7 @@ fun CodeEditor(port: Int, scheme: DynamicScheme) {
                 Text(text = "Restart required.")
             } else {
                 if (kcefState.initialized) {
-                    MonacoView(viewModel = CodeEditorViewModel(), url = "http://localhost:$port/index.html")
+                    MonacoView(viewModel = CodeEditorViewModel(), url = "http://localhost:$port/index.html?darkMode=${LocalDarkMode.current.isDarkMode}")
                 } else {
                     Text(text = "Downloading $kcefState.downloading%")
                 }
@@ -122,6 +116,14 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
             isAlgorithmicDarkeningAllowed = true
             safeBrowsingEnabled = true
         }
+
+    }
+
+    val darkMode = LocalDarkMode.current.isDarkMode
+
+    LaunchedEffect(LocalDarkMode.current.isDarkMode) {
+        println("Setting dark mode to $darkMode")
+    webViewNavigator.evaluateJavaScript("setDarkMode(${darkMode})")
     }
 
     @Composable

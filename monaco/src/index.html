@@ -106,15 +106,15 @@
                     [/[+\-]?\d+\b/, 'number'],
 
                     //registers
-                    [/([vV][0-9a-fA-F]|i)\b/, { token: 'register'}],
+                    [/([vV][0-9a-fA-F]|i)\b/, { token: 'register' }],
 
 
 
                     [/:?[\w\-]+/, {
                         cases: {
-                            '@directives': { token: 'directive'},
-                            '@controls': { token: 'controls'},
-                            '@statements': { token: 'statements'},
+                            '@directives': { token: 'directive' },
+                            '@controls': { token: 'controls' },
+                            '@statements': { token: 'statements' },
 
                         }
                     }],
@@ -124,7 +124,7 @@
 
 
                     // A standalone colon transitions to the label state to capture the name.
-                    [/:\s/, { token: 'label', next: '@label'}],
+                    [/:\s/, { token: 'label', next: '@label' }],
 
                     [/(\:=|\+=|\-=|=\-|\|=|&=|\^=|<<=|>>=)/, 'assignment'],
 
@@ -159,8 +159,13 @@
         });
 
 
+        var isDarkMode = JSON.parse(new URLSearchParams(document.location.search).get("darkMode"));
+        var theme = isDarkMode ? "octoTheme-dark" : "octoTheme-light";
+
+        console.log(theme);
+
         // Define a new theme that contains only rules that match this language
-        monaco.editor.defineTheme("octoTheme", {
+        monaco.editor.defineTheme("octoTheme-dark", {
             base: "vs",
             inherit: false,
             rules: [
@@ -187,8 +192,35 @@
             },
         });
 
+        monaco.editor.defineTheme("octoTheme-light", {
+            base: "vs",
+            inherit: false,
+            rules: [
+                { token: "comment", foreground: "608b4e" },      // Soft green for comments
+                { token: "directive", foreground: "0071c5" },    // Blue for directives
+                { token: "statements", foreground: "d73a49" },   // Red for statements
+                { token: "controls", foreground: "d73a49" },     // Red for control structures
+                { token: "register", foreground: "e36209" },     // Orange for registers
+
+                { token: "assignment", foreground: "d73a49" },   // Red for assignment operators
+                { token: "relational", foreground: "d73a49" },   // Red for relational operators
+                { token: "number", foreground: "6f42c1" },       // Purple for numbers
+                { token: "label", foreground: "22863a" },        // Green for labels
+                { token: "string", foreground: "756bb1" }        // Purple-blue for strings
+            ],
+            colors: {
+                "editor.foreground": "#24292e",                  // Dark gray for main text
+                "editor.background": "#ffffff",                  // White background
+                "editorLineNumber.foreground": "#6e7781",        // Medium gray for line numbers
+                "editorLineNumber.activeForeground": "#24292e",  // Darker gray for active line number
+                "editorCursor.foreground": "#24292e",           // Dark cursor
+            },
+        });
+
+
+
         editorView = monaco.editor.create(document.getElementById("container"), {
-            theme: "octoTheme",
+            theme: theme,
             automaticLayout: true,
             value: getCode(),
             language: "octo",
@@ -196,16 +228,16 @@
             renderLineHighlight: 'none'
         });
 
-    function getCode() {
+        function getCode() {
 
-        return [
-            ''
-        ].join('\n');
+            return [
+                ''
+            ].join('\n');
 
-    }
+        }
 
 
-});
+    });
 
     // change the text without losing document history
     function updateText(text) {
@@ -215,6 +247,12 @@
             range: fullRange
         }]);
         editorView.pushUndoStop();
+    }
+
+    function setDarkMode(darkMode) {
+        var theme = darkMode? "octoTheme-dark": "octoTheme-light";
+        console.log(theme);
+        monaco.editor.setTheme(theme);
     }
 
     function getEditorView() {
