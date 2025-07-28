@@ -31,6 +31,7 @@ import jthemedetecor.consumers.PrimaryColorConsumer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
@@ -41,55 +42,58 @@ import java.nio.file.Path
 import java.util.zip.ZipInputStream
 import kotlin.math.max
 
-fun main() =
-    application {
-        FileKit.init("Chip8-Compose")
+fun main() {
+    FileKit.init("Chip8-Compose")
 
-        var httpPort by remember { mutableIntStateOf(0) }
+    var httpPort = MutableStateFlow(0)
 
-        fun startServer() {
+    fun startServer() {
 
-            val scope = CoroutineScope(Dispatchers.IO + Job())
+        val scope = CoroutineScope(Dispatchers.IO + Job())
 
-            // Launch a coroutine within the scope
-            scope.launch {
-                val bytes = Res.readBytes("files/monaco.zip")
-                System.out.println("Unzipping")
-                val tempDirectory = File(FileKit.filesDir.file, "monaco")
-                if (!tempDirectory.exists()) {
-                    tempDirectory.mkdirs()
-                }
-
-                ZipInputStream(ByteArrayInputStream(bytes)).use { zipInputStream ->
-                    var entry = zipInputStream.nextEntry
-                    while (entry != null) {
-
-                        if (entry.isDirectory) {
-                            val directory = File(tempDirectory, entry.name)
-                            if(!directory.exists()) {
-                                directory.mkdirs()
-                            }
-                        } else {
-                            val file = File(tempDirectory, entry.name)
-                            FileOutputStream(file).use {
-                                it.write(zipInputStream.readAllBytes())
-                            }
-                        }
-                        entry = zipInputStream.nextEntry
-                    }
-
-                }
-                System.out.println("Unzipped to ${tempDirectory.path} ")
-                val address = InetSocketAddress(0)
-                val path = Path.of(tempDirectory.path)
-
-                val server = SimpleFileServer.createFileServer(address, path, SimpleFileServer.OutputLevel.VERBOSE)
-                server.start()
-
-                httpPort = server.address.port
+        // Launch a coroutine within the scope
+        scope.launch {
+            val bytes = Res.readBytes("files/monaco.zip")
+            System.out.println("Unzipping")
+            val tempDirectory = File(FileKit.filesDir.file, "monaco")
+            if (!tempDirectory.exists()) {
+                tempDirectory.mkdirs()
             }
 
+            ZipInputStream(ByteArrayInputStream(bytes)).use { zipInputStream ->
+                var entry = zipInputStream.nextEntry
+                while (entry != null) {
+
+                    if (entry.isDirectory) {
+                        val directory = File(tempDirectory, entry.name)
+                        if(!directory.exists()) {
+                            directory.mkdirs()
+                        }
+                    } else {
+                        val file = File(tempDirectory, entry.name)
+                        FileOutputStream(file).use {
+                            it.write(zipInputStream.readAllBytes())
+                        }
+                    }
+                    entry = zipInputStream.nextEntry
+                }
+
+            }
+            System.out.println("Unzipped to ${tempDirectory.path} ")
+            val address = InetSocketAddress(0)
+            val path = Path.of(tempDirectory.path)
+
+            val server = SimpleFileServer.createFileServer(address, path, SimpleFileServer.OutputLevel.VERBOSE)
+            server.start()
+
+            httpPort.value = server.address.port
         }
+
+    }
+    startServer()
+
+    application {
+
         val scope = rememberCoroutineScope()
 
         val detector: OsThemeDetector by remember { mutableStateOf(OsThemeDetector.detector) }
@@ -127,7 +131,6 @@ fun main() =
 
 
         LaunchedEffect(Unit) {
-            startServer()
             withContext(Dispatchers.Default) {
                 KCEF.init(builder = {
                     installDir(File("kcef-bundle"))
@@ -155,13 +158,13 @@ fun main() =
             onCloseRequest = ::exitApplication,
             title = "Chip8-Compoze",
         ) {
-            when (httpPort) {
+            when (httpPort.value) {
                 0 -> Text("Waiting")
                 else ->
                     CompositionLocalProvider(LocalKCEF provides kcefState) {
                         CompositionLocalProvider(LocalDarkMode provides darkModeState) {
                             println("Recomposed CompositionLocalProvider")
-                            CodeEditor(scheme = scheme, port = httpPort)
+                            CodeEditor(scheme = scheme, port = httpPort.value)
                         }
                     }
             }
@@ -175,3 +178,4 @@ fun main() =
             }
         }
     }
+}
