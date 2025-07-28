@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.dynamiccolor.DynamicScheme
 import com.multiplatform.webview.web.WebView
+import com.multiplatform.webview.web.WebViewState
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
@@ -37,26 +38,35 @@ import dev.secondsun.chip8.compose.localproviders.LocalKCEF
  * Design note: Monaco uses workers which will only run if they are loaded from an http server. This is why we embed
  * instead of using a file:// resource.
  */
+
 @Composable
 fun CodeEditor(port: Int, scheme: DynamicScheme) {
-
     MaterialTheme(colorScheme = scheme.toMaterialScheme()) {
         Scaffold(modifier = Modifier.fillMaxSize()) {
             val kcefState = LocalKCEF.current
+            val isDarkMode = LocalDarkMode.current.isDarkMode
 
             if (kcefState.restartRequired) {
                 Text(text = "Restart required.")
             } else {
                 if (kcefState.initialized) {
-                    MonacoView(viewModel = CodeEditorViewModel(), url = "http://localhost:$port/index.html?darkMode=${LocalDarkMode.current.isDarkMode}")
+                    // Use remember to memoize the MonacoView
+                    val baseUrl = remember { "http://localhost:$port/index.html?darkMode=${isDarkMode}" }
+                    key(baseUrl) {
+                        StableMonacoView(
+                            baseUrl = baseUrl,
+                            isDarkMode = isDarkMode,
+                            viewModel = remember { CodeEditorViewModel() }
+                        )
+                    }
                 } else {
                     Text(text = "Downloading $kcefState.downloading%")
                 }
             }
         }
     }
-
 }
+
 
 private fun DynamicScheme.toMaterialScheme() : ColorScheme {
     val scheme = this
@@ -100,14 +110,17 @@ private fun DynamicScheme.toMaterialScheme() : ColorScheme {
     )
 }
 
-@Composable
-fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEditorViewModel() }) {
 
-    val webViewState =
-        rememberWebViewState(url)
+@Composable
+private fun StableMonacoView(
+    baseUrl: String,
+    isDarkMode: Boolean,
+    viewModel: CodeEditorViewModel
+) {
+    // Remove isDarkMode from URL to prevent WebView recreation
+    val webViewState = rememberWebViewState(baseUrl)
     val webViewNavigator = rememberWebViewNavigator()
 
-    System.out.println("Recomposing")
     webViewState.webSettings.apply {
         isJavaScriptEnabled = true
         customUserAgentString =
@@ -116,65 +129,68 @@ fun MonacoView(url: String, viewModel: CodeEditorViewModel = viewModel { CodeEdi
             isAlgorithmicDarkeningAllowed = true
             safeBrowsingEnabled = true
         }
-
     }
 
-    val darkMode = LocalDarkMode.current.isDarkMode
-
-    LaunchedEffect(LocalDarkMode.current.isDarkMode) {
-        println("Setting dark mode to $darkMode")
-    webViewNavigator.evaluateJavaScript("setDarkMode(${darkMode})")
+    // Initial setup of dark mode
+    LaunchedEffect(Unit) {
+        webViewNavigator.evaluateJavaScript("setDarkMode($isDarkMode)")
     }
 
-    @Composable
-    fun ControlRow(modifier: Modifier = Modifier) {
-
-        var debugMenuOpened by remember { mutableStateOf(false) }
-        Box() {
-            Row(modifier) {
-                IconButton(onClick = { debugMenuOpened = !debugMenuOpened }) {
-                    Icon(
-                        Icons.Default.Settings,
-                        contentDescription = "Open Debug Menu"
-                    )
-                }
-
-                IconButton(onClick = {
-                    viewModel.openFile { contents ->
-                        webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
-                    }
-                }) {
-                    Icon(
-                        Icons.Default.FileOpen,
-                        contentDescription = "Open File"
-                    )
-                }
-
-            }
-            if (debugMenuOpened) {
-                Row(modifier.background(Color.Black)) {
-
-                    IconButton(onClick = {debugMenuOpened = false}) {
-                        Icon(Icons.Default.Close, "Close")
-                    }
-
-                    Button(onClick = { webViewState.nativeWebView.reload(); debugMenuOpened = false }) {
-                        Text("Reload")
-                    }
-                }
-
-            }
-        }
+    // Update dark mode when it changes
+    LaunchedEffect(isDarkMode) {
+        webViewNavigator.evaluateJavaScript("setDarkMode($isDarkMode)")
     }
 
     Column(Modifier.fillMaxSize()) {
-        ControlRow(modifier = Modifier.fillMaxWidth().wrapContentHeight())
+        ControlRow(
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+            webViewState = webViewState,
+        ) {
+            viewModel.openFile { contents ->
+                webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
+            }
+        }
         WebView(
             state = webViewState,
             navigator = webViewNavigator,
             modifier = Modifier.fillMaxSize(),
         )
     }
-
-
 }
+@Composable
+fun ControlRow(modifier: Modifier = Modifier, webViewState: WebViewState, openFileOnclick: () -> Unit) {
+
+    var debugMenuOpened by remember { mutableStateOf(false) }
+    Box() {
+        Row(modifier) {
+            IconButton(onClick = { debugMenuOpened = !debugMenuOpened }) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Open Debug Menu"
+                )
+            }
+
+            IconButton(onClick = openFileOnclick) {
+                Icon(
+                    Icons.Default.FileOpen,
+                    contentDescription = "Open File"
+                )
+            }
+
+        }
+        if (debugMenuOpened) {
+            Row(modifier.background(Color.Black)) {
+
+                IconButton(onClick = {debugMenuOpened = false}) {
+                    Icon(Icons.Default.Close, "Close")
+                }
+
+                Button(onClick = { webViewState.nativeWebView.reload(); debugMenuOpened = false }) {
+                    Text("Reload")
+                }
+            }
+
+        }
+    }
+}
+
