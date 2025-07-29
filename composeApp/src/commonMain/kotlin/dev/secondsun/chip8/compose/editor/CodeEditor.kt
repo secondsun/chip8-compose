@@ -3,9 +3,12 @@ package dev.secondsun.chip8.compose.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RunCircle
+import androidx.compose.material.icons.filled.RunningWithErrors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -15,9 +18,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
+import chip8_compose.composeapp.generated.resources.Res
+import chip8_compose.composeapp.generated.resources.logo
 import com.google.dynamiccolor.DynamicScheme
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.WebViewState
@@ -26,6 +31,7 @@ import com.multiplatform.webview.web.rememberWebViewState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
 import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
 import dev.secondsun.chip8.compose.localproviders.LocalKCEF
+import org.jetbrains.compose.resources.painterResource
 
 
 /**
@@ -145,11 +151,12 @@ private fun StableMonacoView(
         ControlRow(
             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             webViewState = webViewState,
-        ) {
-            viewModel.openFile { contents ->
-                webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
-            }
-        }
+            openFileOnclick = {
+                viewModel.openFile { contents ->
+                    webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
+                }
+            },
+        )
         WebView(
             state = webViewState,
             navigator = webViewNavigator,
@@ -158,22 +165,45 @@ private fun StableMonacoView(
     }
 }
 @Composable
-fun ControlRow(modifier: Modifier = Modifier, webViewState: WebViewState, openFileOnclick: () -> Unit) {
+fun ControlRow(
+    modifier: Modifier = Modifier,
+    webViewState: WebViewState,
+    openFileOnclick: () -> Unit = {print("Open File Pressed")},
+    runOnClick: () -> Unit = {print("Run File Pressed")},
+) {
 
     var debugMenuOpened by remember { mutableStateOf(false) }
     Box() {
         Row(modifier) {
-            IconButton(onClick = { debugMenuOpened = !debugMenuOpened }) {
+
+            IconButton(onClick = { print("TODO : Open Website") }) {
                 Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Open Debug Menu"
+                    painterResource(Res.drawable.logo),
+                    contentDescription = "Chip8 Compose"
                 )
             }
 
             IconButton(onClick = openFileOnclick) {
                 Icon(
-                    Icons.Default.FileOpen,
+                    Icons.Default.FolderOpen,
                     contentDescription = "Open File"
+                )
+            }
+
+            IconButton(onClick = runOnClick) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = "Run"
+                )
+            }
+
+            IconButton(
+                onClick = { debugMenuOpened = !debugMenuOpened },
+                modifier = Modifier.weight(1f).wrapContentWidth(Alignment.End)
+            ) {
+                Icon(
+                    Icons.Default.BugReport,
+                    contentDescription = "Open Debug Menu"
                 )
             }
 
