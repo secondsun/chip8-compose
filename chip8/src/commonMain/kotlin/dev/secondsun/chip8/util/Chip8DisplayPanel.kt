@@ -21,47 +21,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dev.secondsun.chip8.util;
+package dev.secondsun.chip8.util
 
-import dev.secondsun.chip8.Chip8;
-
-import javax.swing.*;
-import java.awt.*;
+import dev.secondsun.chip8.Chip8
+import java.awt.Color
+import java.awt.Graphics
+import javax.swing.JPanel
 
 /**
  *
  * @author summers
  */
-public class Chip8DisplayPanel extends JPanel {
-    
-    private static final long serialVersionUID = 0x203920L;
+class Chip8DisplayPanel : JPanel() {
+    private var chip8 = Chip8()
 
-    private Chip8 chip8 = new Chip8();
-    
-    @Override
-    public void paint(Graphics g) {
-        int width = super.getWidth();
-        int height = super.getHeight();
-        int pixelWidth = width / 64;
-        int pixelHeight = height / 32;
-        byte[] video = chip8.getScreen();
-        for (int x = 0; x < 64; x++) {
-            for (int y = 0; y < 32; y++) {
-                if (video[y * 64 + x]  == 0) {
-                    g.setColor(Color.BLACK);
+    override fun paint(g: Graphics) {
+        val width = super.getWidth()
+        val height = super.getHeight()
+        val pixelWidth = width / 64
+        val pixelHeight = height / 32
+        val video = chip8.screen
+        for (x in 0..63) {
+            for (y in 0..31) {
+                if (video[y * 64 + x].toInt() == 0) {
+                    g.setColor(Color.BLACK)
                 } else {
-                    g.setColor(Color.WHITE);
+                    g.setColor(Color.WHITE)
                 }
-                g.fillRect(x * pixelWidth, y*pixelHeight , pixelWidth, pixelHeight);
+                g.fillRect(x * pixelWidth, y * pixelHeight, pixelWidth, pixelHeight)
             }
         }
     }
 
-    public void setChip8(Chip8 chip8) {
-        this.chip8 = chip8;
+    fun setChip8(chip8: Chip8) {
+        this.chip8 = chip8
     }
-    
-    
-    
-    
+
+
+    companion object {
+        private const val serialVersionUID = 0x203920L
+    }
 }

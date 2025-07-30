@@ -1,5 +1,6 @@
+
 plugins {
-    id("java")
+    alias(libs.plugins.kotlinMultiplatform)
 }
 
 group = "dev.secondsun"
@@ -9,11 +10,24 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+kotlin {
+    jvm("desktop")
+
+    sourceSets {
+        val commonTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.junit.jupiter.api)
+                implementation(libs.junit.jupiter.engine)
+            }
+        }
+
+
+    }
 }
 
-tasks.test {
+
+tasks.withType<Test> {
     useJUnitPlatform()
 }
+
