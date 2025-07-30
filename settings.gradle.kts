@@ -36,3 +36,4 @@ plugins {
 
 include(":composeApp", ":monaco")
 include("material-color-utils")
+include("chip8")

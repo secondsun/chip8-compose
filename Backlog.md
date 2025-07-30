@@ -10,6 +10,7 @@ Here's all the ideas that I have, both for fixing current issues, and feature im
  * Help text
  * Saving
  * Debugger
+ * Assembling
  * Basically everything in https://johnearnest.github.io/Octo/
 
 # Working
