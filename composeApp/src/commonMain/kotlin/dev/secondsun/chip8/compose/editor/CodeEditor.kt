@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.viewModelScope
 import chip8_compose.composeapp.generated.resources.Res
 import chip8_compose.composeapp.generated.resources.logo
 import com.google.dynamiccolor.DynamicScheme
@@ -29,8 +30,11 @@ import com.multiplatform.webview.web.WebViewState
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
+import dev.secondsun.chip8.compose.editor.state.FileType
 import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
 import dev.secondsun.chip8.compose.localproviders.LocalKCEF
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -126,6 +130,14 @@ private fun StableMonacoView(
     // Remove isDarkMode from URL to prevent WebView recreation
     val webViewState = rememberWebViewState(baseUrl)
     val webViewNavigator = rememberWebViewNavigator()
+    val state = viewModel.editorState.onEach {state ->
+        val readOnly = when(state.fileType) {
+            FileType.TEXT -> "false"
+            FileType.BINARY -> "true"
+        }
+
+        webViewNavigator.evaluateJavaScript("updateText(`${state.contents().replace("`", "\\`")}`, $readOnly)")
+    }.launchIn(viewModel.viewModelScope)
 
     webViewState.webSettings.apply {
         isJavaScriptEnabled = true
@@ -147,14 +159,13 @@ private fun StableMonacoView(
         webViewNavigator.evaluateJavaScript("setDarkMode($isDarkMode)")
     }
 
+
     Column(Modifier.fillMaxSize()) {
         ControlRow(
             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             webViewState = webViewState,
             openFileOnclick = {
-                viewModel.openFile { contents ->
-                    webViewNavigator.evaluateJavaScript("updateText(`${contents.replace("`", "\\`")}`, \"octo\")")
-                }
+                viewModel.openFile()
             },
         )
         WebView(

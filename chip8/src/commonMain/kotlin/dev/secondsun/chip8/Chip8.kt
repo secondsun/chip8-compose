@@ -31,12 +31,12 @@ import java.util.*
  * This class is the main chip8 system
  */
 class Chip8 {
-    var pC: Int = 0x200
+    var pc: Int = 0x200
         private set
     private var iRegister = 0
     private val registers = IntArray(0x10)
     private val random = Random()
-    var sP: Int = 0
+    var sp: Int = 0
         private set
     private var delayTimer = 0
     private var soundTimer = 0
@@ -120,15 +120,15 @@ class Chip8 {
             0x1000 -> {
                 //1NNN Jump to NNN
                 val low = 0x0FFF and instruction
-                this.pC = low
+                this.pc = low
             }
 
             0x2000 -> {
                 //2NNN start subroutine at NNN
-                stack[this.sP] = this.pC
-                this.sP++
+                stack[this.sp] = this.pc
+                this.sp++
                 val low = 0x0FFF and instruction
-                this.pC = low
+                this.pc = low
             }
 
             0x3000 -> {
@@ -136,7 +136,7 @@ class Chip8 {
                 val low = 0x0FF and instruction
                 val register = (instruction and 0x0f00) shr 8
                 if ((getVX(register)) == low) {
-                    this.pC += 0x2
+                    this.pc += 0x2
                 }
             }
 
@@ -145,7 +145,7 @@ class Chip8 {
                 val registery = (instruction and 0x00f0) shr 4
                 val registerx = (instruction and 0x0f00) shr 8
                 if (getVX(registerx) == getVX(registery)) {
-                    this.pC += 0x2
+                    this.pc += 0x2
                 }
             }
 
@@ -154,7 +154,7 @@ class Chip8 {
                 val low = 0x0FF and instruction
                 val register = (instruction and 0x0f00) shr 8
                 if (getVX(register) != low) {
-                    this.pC += 0x2
+                    this.pc += 0x2
                 }
             }
 
@@ -163,15 +163,15 @@ class Chip8 {
                 val registery = (instruction and 0x00f0) shr 4
                 val registerx = (instruction and 0x0f00) shr 8
                 if (getVX(registerx) != getVX(registery)) {
-                    this.pC += 0x2
+                    this.pc += 0x2
                 }
             }
 
             0x0000 -> {
                 when (instruction) {
                     0x00EE -> {
-                        this.sP--
-                        this.pC = stack[this.sP]
+                        this.sp--
+                        this.pc = stack[this.sp]
                     }
 
                     0x00E0 -> this.screen = ByteArray(screen.size)
@@ -207,7 +207,7 @@ class Chip8 {
 
                     0x18 -> soundTimer = getVX(register)
                     0x0A -> if (Input.read() == -1) {
-                        this.pC -= 0x2
+                        this.pc -= 0x2
                     } else {
                         setVX(Input.read(), register)
                     }
@@ -229,7 +229,7 @@ class Chip8 {
             0xB000 -> {
                 //BNNN Jump to NNN + V0
                 val low = 0x0FFF and instruction
-                this.pC = low + getVX(0)
+                this.pc = low + getVX(0)
             }
 
             0x6000 -> {
@@ -261,12 +261,12 @@ class Chip8 {
                 when (low) {
                     0x9E ->                         //skip if register == input
                         if (getVX(register) == Input.read()) {
-                            this.pC += 0x2
+                            this.pc += 0x2
                         }
 
                     0xA1 ->                         //skip if register != input
                         if (getVX(register) != Input.read()) {
-                            this.pC += 0x2
+                            this.pc += 0x2
                         }
 
                     else -> throw UnsupportedOperationException("Unsupported opcode:" + Integer.toHexString(instruction))
@@ -356,7 +356,7 @@ class Chip8 {
     }
 
     fun cycle() {
-        val instruction = ((memory[this.pC++].toInt() shl 8) and 0xFF00) or (memory[this.pC++].toInt() and 0xFF)
+        val instruction = ((memory[this.pc++].toInt() shl 8) and 0xFF00) or (memory[this.pc++].toInt() and 0xFF)
         val time = System.currentTimeMillis()
         if (time > nextTimer) {
             countDownTimers()
@@ -437,7 +437,7 @@ class Chip8 {
     }
 
     private fun getCharacterAddress(digit: Int): Int {
-        require(((0xff) and digit) <= 0xf) { digit.toString() + " is not a vlaid character" }
+        require(((0xff) and digit) <= 0xf) { "$digit is not a valid character" }
         return 5 * digit
     }
 

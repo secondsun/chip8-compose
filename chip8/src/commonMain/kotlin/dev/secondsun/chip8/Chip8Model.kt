@@ -73,8 +73,8 @@ class Chip8Model : DefaultTableModel(20, 2) {
         setValueAt(Integer.toHexString(chip8.vF), 15, 1)
         setValueAt("", 16, 1)
         setValueAt(Integer.toHexString(chip8.getiRegister()), 17, 1)
-        setValueAt(Integer.toHexString(chip8.pC), 18, 1)
-        setValueAt(Integer.toHexString(chip8.sP), 19, 1)
+        setValueAt(Integer.toHexString(chip8.pc), 18, 1)
+        setValueAt(Integer.toHexString(chip8.sp), 19, 1)
     }
 
 

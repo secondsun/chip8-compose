@@ -28,7 +28,7 @@ class E01ArithmeticOpCodeTest {
      */
     @Test
     fun testPCInitializedto0x200() {
-        assertEquals(0x0200, chip8.pC)
+        assertEquals(0x0200, chip8.pc)
     }
 
     /**

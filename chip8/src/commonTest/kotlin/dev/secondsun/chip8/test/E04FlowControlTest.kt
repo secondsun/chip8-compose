@@ -40,10 +40,10 @@ class E04FlowControlTest {
     @Test
     fun testJump() {
         chip8.execute(0x1DAE)
-        assertEquals(0xDAE, chip8.pC)
+        assertEquals(0xDAE, chip8.pc)
 
         chip8.execute(0xB432)
-        assertEquals(1174, chip8.pC)
+        assertEquals(1174, chip8.pc)
     }
 
     /**
@@ -60,10 +60,10 @@ class E04FlowControlTest {
     @Test
     fun testSubroutines() {
         chip8.execute(0x2DAE)
-        assertEquals(0xDAE, chip8.pC)
+        assertEquals(0xDAE, chip8.pc)
 
         chip8.execute(0x00EE)
-        assertEquals(0x200, chip8.pC)
+        assertEquals(0x200, chip8.pc)
     }
 
     /**
@@ -93,32 +93,32 @@ class E04FlowControlTest {
     @Test
     fun testEqualJumps() {
         chip8.execute(0x3064) // Skip if V0 == 0x64
-        assertEquals(0x202, chip8.pC) //Increment the PC by 2
+        assertEquals(0x202, chip8.pc) //Increment the PC by 2
 
         chip8.execute(0x3164) // Skip if V1 == 0x64, doesn't skip because V1 == 0x27
-        assertEquals(0x202, chip8.pC) //Do not increment the PC
+        assertEquals(0x202, chip8.pc) //Do not increment the PC
 
         chip8.execute(0x6764) // Set V7 to 64
         chip8.execute(0x5070) // Skip if V0 == V7
-        assertEquals(0x204, chip8.pC) //Increment the PC by 2
+        assertEquals(0x204, chip8.pc) //Increment the PC by 2
 
         chip8.execute(0x5170) // Skip if V1 == V7 (It doesn't)
-        assertEquals(0x204, chip8.pC) //Increment the PC by 2
+        assertEquals(0x204, chip8.pc) //Increment the PC by 2
     }
 
     @Test
     fun testNonEqualJumps() {
         chip8.execute(0x4064) // Skip if V0 != 0x64 (it won't skip)
-        assertEquals(0x200, chip8.pC) //Increment the PC by 2
+        assertEquals(0x200, chip8.pc) //Increment the PC by 2
 
         chip8.execute(0x4164) // Skip if V1 == 0x64, skips because V1 == 0x27
-        assertEquals(0x202, chip8.pC) //Do not increment the PC
+        assertEquals(0x202, chip8.pc) //Do not increment the PC
 
         chip8.execute(0x6764) // Set V7 to 64
         chip8.execute(0x9070) // Skip if V0 != V7(It won't skip)
-        assertEquals(0x202, chip8.pC) //Increment the PC by 2
+        assertEquals(0x202, chip8.pc) //Increment the PC by 2
 
         chip8.execute(0x9170) // Skip if V1 != V7 
-        assertEquals(0x204, chip8.pC) //Increment the PC by 2
+        assertEquals(0x204, chip8.pc) //Increment the PC by 2
     }
 }

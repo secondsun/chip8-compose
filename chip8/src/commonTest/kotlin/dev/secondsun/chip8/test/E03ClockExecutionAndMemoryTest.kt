@@ -66,6 +66,6 @@ class E03ClockExecutionAndMemoryTest {
         assertEquals(0x20, chip8.v1)
         assertEquals(0x25, chip8.v2)
         assertEquals(0x30, chip8.v3)
-        assertEquals(0x208, chip8.pC)
+        assertEquals(0x208, chip8.pc)
     }
 }

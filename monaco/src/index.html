@@ -242,12 +242,13 @@
     });
 
     // change the text without losing document history
-    function updateText(text) {
+    function updateText(text, readOnly) {
         const fullRange = editorView.getModel().getFullModelRange();
         editorView.executeEdits(null, [{
             text: text,
             range: fullRange
         }]);
+        editorView.updateOptions({ readOnly: readOnly });
         editorView.pushUndoStop();
     }
 

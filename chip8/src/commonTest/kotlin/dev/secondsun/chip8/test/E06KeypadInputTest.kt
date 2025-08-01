@@ -48,20 +48,20 @@ class E06KeypadInputTest {
      */
     @Test
     fun testChip8WaitsForKeyboardInput() {
-        val pc: Int = chip8.pC
+        val pc: Int = chip8.pc
         chip8.cycle()
         chip8.cycle()
         chip8.cycle()
         chip8.cycle()
-        assertEquals(pc, chip8.pC)
+        assertEquals(pc, chip8.pc)
     }
 
     @Test
     fun testChip8ContinuesAfterKeyboardInput() {
-        val pc: Int = chip8.pC
+        val pc: Int = chip8.pc
         chip8.cycle()
         chip8.cycle()
-        assertEquals(pc, chip8.pC)
+        assertEquals(pc, chip8.pc)
 
         Input.press(0xA)
         chip8.cycle()
@@ -82,12 +82,12 @@ class E06KeypadInputTest {
         Input.press(0x1)
         chip8.execute(0x6002) //Store 0x02 into V0
         chip8.execute(0xE09E) //Skip if 0x02 is pressed (it isn't)
-        assertEquals(0x200, chip8.pC)
+        assertEquals(0x200, chip8.pc)
 
         Input.press(0x2)
         chip8.execute(0x6002) //Store 0x02 into V0
         chip8.execute(0xE09E) //Skip if 0x02 is pressed (it is)
-        assertEquals(0x202, chip8.pC)
+        assertEquals(0x202, chip8.pc)
     }
 
     /**
@@ -103,11 +103,11 @@ class E06KeypadInputTest {
         Input.press(0x1)
         chip8.execute(0x6002) //Store 0x02 into V0
         chip8.execute(0xE0A1) //Skip if 0x02 is not pressed (it isn't)
-        assertEquals(0x202, chip8.pC)
+        assertEquals(0x202, chip8.pc)
 
         Input.press(0x2)
         chip8.execute(0x6002) //Store 0x02 into V0
         chip8.execute(0xE0A1) //Skip if 0x02 is pressed (it is)
-        assertEquals(0x202, chip8.pC)
+        assertEquals(0x202, chip8.pc)
     }
 }
