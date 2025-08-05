@@ -32,9 +32,7 @@ object Chip8Utils {
         return createFromRom(rom.toPath())
     }
 
-    @Throws(IOException::class)
-    fun createFromRom(rom: Path): Chip8 {
-        val reader = Files.readAllBytes(rom)
+    fun createFromRom(reader : ByteArray): Chip8 {
         var index = 0x200
         val memory = ByteArray(4096) //4k memory
         try {
@@ -48,6 +46,11 @@ object Chip8Utils {
 
         val chip8 = Chip8(memory)
         return chip8
+    }
+
+    @Throws(IOException::class)
+    fun createFromRom(rom: Path): Chip8 {
+        return createFromRom(Files.readAllBytes(rom))
     }
 
     /**

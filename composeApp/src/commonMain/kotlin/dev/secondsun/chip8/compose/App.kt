@@ -15,7 +15,8 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.painterResource
 
 import chip8_compose.composeapp.generated.resources.Res
-import chip8_compose.composeapp.generated.resources.compose_multiplatform
+import chip8_compose.composeapp.generated.resources.logo
+
 
 @Composable
 fun App() {
@@ -33,7 +34,7 @@ fun App() {
             AnimatedVisibility(showUI) {
                 val greeting = remember { Greeting().greet() }
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
+                    Image(painterResource(Res.drawable.logo),  contentDescription = null)
                     Text("Compose: $greeting")
                 }
             }

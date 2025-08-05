@@ -59,6 +59,7 @@ kotlin {
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.compose.components.splitpane)
             implementation(project(":material-color-utils"))
+            implementation(project(":chip8"))
 
         }
         commonTest.dependencies {

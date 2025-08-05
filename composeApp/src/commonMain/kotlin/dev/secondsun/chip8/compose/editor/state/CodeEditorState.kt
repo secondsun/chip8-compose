@@ -1,7 +1,5 @@
 package dev.secondsun.chip8.compose.editor.state
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.text.Charsets.UTF_8
 
 data class CodeEditorState(val fileName : String, val fileType : FileType, val fileContents : ByteArray) {

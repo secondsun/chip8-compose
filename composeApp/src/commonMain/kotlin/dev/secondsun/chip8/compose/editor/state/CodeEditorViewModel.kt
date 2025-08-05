@@ -6,6 +6,7 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.exists
+import io.github.vinceglb.filekit.name
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,11 +40,10 @@ class CodeEditorViewModel : ViewModel() {
                     //Start reading file
                     FileInputStream(javaFile).use { fis ->
 
-                        //Remove UTF-8 Byte order marks (if present)
-                        var byteArray = fis.readAllBytes()
 
+                        val byteArray = fis.readAllBytes()
                         val fileType = guessFileType(byteArray)
-                        _editorState.value = CodeEditorState(String(byteArray, UTF_8), fileType, byteArray)
+                        _editorState.value = CodeEditorState(file.name, fileType, byteArray)
 
                     }
                 }

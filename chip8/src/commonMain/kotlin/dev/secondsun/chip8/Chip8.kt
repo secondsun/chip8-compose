@@ -42,6 +42,10 @@ class Chip8 {
     private var soundTimer = 0
     private val stack = IntArray(16)
     val memory: ByteArray
+
+    /**
+     * Chip8 screen memory, each byte is a separate pixel.
+     */
     var screen: ByteArray = ByteArray(64 * 32)
         private set
     private var nextTimer: Long = 0

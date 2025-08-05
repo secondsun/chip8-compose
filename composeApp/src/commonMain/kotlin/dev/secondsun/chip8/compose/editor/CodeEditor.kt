@@ -1,5 +1,6 @@
 package dev.secondsun.chip8.compose.editor
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -20,7 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import chip8_compose.composeapp.generated.resources.Res
 import chip8_compose.composeapp.generated.resources.logo
@@ -29,12 +33,18 @@ import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.WebViewState
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
+import dev.secondsun.chip8.compose.editor.state.CodeEditorState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
 import dev.secondsun.chip8.compose.editor.state.FileType
+import dev.secondsun.chip8.compose.emulator.Chip8EmulatorCanvas
+import dev.secondsun.chip8.compose.emulator.state.Chip8EmulatorViewModel
 import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
 import dev.secondsun.chip8.compose.localproviders.LocalKCEF
+import dev.secondsun.chip8.util.Chip8Utils
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -130,14 +140,43 @@ private fun StableMonacoView(
     // Remove isDarkMode from URL to prevent WebView recreation
     val webViewState = rememberWebViewState(baseUrl)
     val webViewNavigator = rememberWebViewNavigator()
-    val state = viewModel.editorState.onEach {state ->
-        val readOnly = when(state.fileType) {
+
+    val editorState by viewModel.editorState.collectAsState()
+    // Derive emulator state from editor state
+    val emulatorState by remember {
+        derivedStateOf {
+            if (editorState.fileType == FileType.BINARY) {
+                val chip8 = Chip8Utils.createFromRom(editorState.fileContents)
+                Chip8EmulatorViewModel(chip8, 30)
+            } else {
+                null
+            }
+        }
+    }
+
+
+    var showEmulator by remember { mutableStateOf(false) }
+    var chip8EmulatorViewModel by remember { mutableStateOf<Chip8EmulatorViewModel?>(null) }
+
+
+    // Handle editor state changes
+    LaunchedEffect(editorState) {
+        val readOnly = when (editorState.fileType) {
             FileType.TEXT -> "false"
             FileType.BINARY -> "true"
         }
 
-        webViewNavigator.evaluateJavaScript("updateText(`${state.contents().replace("`", "\\`")}`, $readOnly)")
-    }.launchIn(viewModel.viewModelScope)
+        webViewNavigator.evaluateJavaScript(
+            "updateText(`${
+                editorState.contents().replace("`", "\\`")
+            }`, $readOnly)"
+        )
+
+        // Reset emulator when file changes
+        showEmulator = false
+        chip8EmulatorViewModel?.stop()
+        chip8EmulatorViewModel = null
+    }
 
     webViewState.webSettings.apply {
         isJavaScriptEnabled = true
@@ -167,12 +206,27 @@ private fun StableMonacoView(
             openFileOnclick = {
                 viewModel.openFile()
             },
+            runOnClick = {
+                if (editorState.fileType == FileType.BINARY && emulatorState != null) {
+                    showEmulator = true
+                    chip8EmulatorViewModel = emulatorState
+                    chip8EmulatorViewModel?.viewModelScope?.launch {
+                        chip8EmulatorViewModel?.launch()
+                    }
+                }
+            }
+
         )
-        WebView(
-            state = webViewState,
-            navigator = webViewNavigator,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (showEmulator && chip8EmulatorViewModel != null) {
+            Chip8EmulatorCanvas(modifier = Modifier.fillMaxSize(), chip8EmulatorViewModel!!)
+        } else {
+            WebView(
+                state = webViewState,
+                navigator = webViewNavigator,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+        }
     }
 }
 @Composable
@@ -190,6 +244,7 @@ fun ControlRow(
             IconButton(onClick = { print("TODO : Open Website") }) {
                 Icon(
                     painterResource(Res.drawable.logo),
+                    tint = Color.Unspecified,
                     contentDescription = "Chip8 Compose"
                 )
             }
