@@ -69,6 +69,22 @@
 
     require(['vs/editor/editor.main'], function () {
 
+    monaco.editor.onDidCreateEditor(editor=>{
+
+        console.log("Monaco Init");
+        setTimeout(() => {
+            window.nachosBridge.callNative("MonacoInit",JSON.stringify({}),
+              function (data) {
+                   console.log("Monaco Init Done", data);
+                   data = JSON.parse(data);
+                   updateText(data.fileContent, data.readOnly == "BINARY");
+                   console.log("Setting Dark Mode", data.darkMode);
+                   setDarkMode(data.darkMode == true);
+              }
+            );
+        }, 1000)
+    });
+
         monaco.languages.register({ id: "octo" });
 
         // Register a tokens provider for the language

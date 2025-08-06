@@ -1,4 +1,4 @@
-# Chip-8 Compose
+# Nachos
 
 This is an experimental IDE for Chip-8, SuperChip, and XO-Chip. It is heavily inspired by the [Octo](https://github.com/JohnEarnest/Octo)
 Chip8 assembler project. The goal of this project is to replicate most of the functionality in Octo in Compose and support
