@@ -1,3 +1,5 @@
+package dev.secondsun.chip8.compose.editor.webview
+
 import com.multiplatform.webview.jsbridge.IJsMessageHandler
 import com.multiplatform.webview.jsbridge.JsMessage
 import com.multiplatform.webview.jsbridge.dataToJsonString

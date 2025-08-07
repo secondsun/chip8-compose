@@ -1,6 +1,6 @@
 package dev.secondsun.chip8.compose.editor
 
-import MonacoInitMessageHandler
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -32,6 +32,7 @@ import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
 import dev.secondsun.chip8.compose.editor.state.FileType
+import dev.secondsun.chip8.compose.editor.webview.MonacoInitMessageHandler
 import dev.secondsun.chip8.compose.emulator.Chip8EmulatorCanvas
 import dev.secondsun.chip8.compose.emulator.state.Chip8EmulatorViewModel
 import dev.secondsun.chip8.compose.localproviders.LocalDarkMode
@@ -57,6 +58,7 @@ import org.jetbrains.compose.resources.painterResource
 fun NachosMain(port: Int, scheme: DynamicScheme) {
     MaterialTheme(colorScheme = scheme.toMaterialScheme()) {
         Scaffold(modifier = Modifier.fillMaxSize()) {
+
             val kcefState = LocalKCEF.current
             val isDarkMode = LocalDarkMode.current.isDarkMode
 
@@ -120,7 +122,12 @@ private fun NachosAppContent(
     }
     val jsBridge = WebViewJsBridge(webViewNavigator, "nachosBridge")
 
-        jsBridge.register(MonacoInitMessageHandler(provideFileText = {editorState.contents()}, provideFileType = {editorState.fileType},provideTheme = {isDarkMode}))
+        jsBridge.register(
+            MonacoInitMessageHandler(
+                provideFileText = { editorState.contents() },
+                provideFileType = { editorState.fileType },
+                provideTheme = { isDarkMode })
+        )
 
 
     // Update dark mode when it changes
