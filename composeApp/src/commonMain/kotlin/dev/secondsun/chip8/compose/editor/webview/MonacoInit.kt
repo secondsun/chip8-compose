@@ -20,8 +20,9 @@ class MonacoInitMessageHandler(val provideFileText : ()->String, val provideFile
         callback: (String) -> Unit
     ) {
 
-        val data = MonacoInitResult(provideFileText(), provideFileType(), provideTheme())
-        callback(dataToJsonString(data))    }
+        val data = MonacoInitResult(provideFileText().replace("\n", "\\n"), provideFileType(), provideTheme())
+        val jsonString = dataToJsonString(data)
+        callback(jsonString)    }
 
 }
 

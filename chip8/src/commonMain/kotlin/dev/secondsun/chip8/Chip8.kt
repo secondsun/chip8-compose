@@ -40,6 +40,7 @@ class Chip8 {
         private set
     private var delayTimer = 0
     private var soundTimer = 0
+    private var audioEnabled = false
     private val stack = IntArray(16)
     val memory: ByteArray
 
@@ -373,7 +374,7 @@ class Chip8 {
         if (delayTimer > 0) {
             delayTimer--
         }
-        if (soundTimer > 0) {
+        if (soundTimer > 0 && audioEnabled) {
             soundTimer--
             Audio.play()
         } else {

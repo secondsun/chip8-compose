@@ -75,14 +75,24 @@
         setTimeout(() => {
             window.nachosBridge.callNative("MonacoInit",JSON.stringify({}),
               function (data) {
-                   console.log("Monaco Init Done", data);
-                   data = JSON.parse(data);
-                   updateText(data.fileContent, data.readOnly == "BINARY");
-                   console.log("Setting Dark Mode", data.darkMode);
-                   setDarkMode(data.darkMode == true);
+                   console.log("Monaco Init Done", typeof data);
+                   try {
+                        data = JSON.parse(data);
+                        try {
+                            updateText(data.fileContent, data.readOnly == "BINARY");
+                            console.log("Setting Dark Mode", data.darkMode);
+                            setDarkMode(data.darkMode == true);
+                        } catch (e) {
+                            console.log("Error updating text or setting dark mode", data, e);
+                        }
+                    } catch (e) {
+                        console.log("Error parsing data", e);
+                    }
+
+
               }
             );
-        }, 1000)
+        }, 100)
     });
 
         monaco.languages.register({ id: "octo" });
@@ -175,7 +185,7 @@
         });
 
 
-        var isDarkMode = JSON.parse(new URLSearchParams(document.location.search).get("darkMode"));
+        var isDarkMode = false
         var theme = isDarkMode ? "octoTheme-dark" : "octoTheme-light";
 
         console.log(theme);
