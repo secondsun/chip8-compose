@@ -22,9 +22,12 @@ class MonacoInitMessageHandler(val provideFileText : ()->String, val provideFile
         callback: (String) -> Unit
     ) {
 
+        //TODO : the jsbridge unescapes the newlines in the string for some reason, file bug upstream
+        // in the meanwhile, we double escape it.
         val data = MonacoInitResult(provideFileText().replace("\n", "\\n"), provideFileType(), provideTheme())
         val jsonString = dataToJsonString(data)
-        callback(jsonString)    }
+        callback(jsonString)
+    }
 
 }
 
