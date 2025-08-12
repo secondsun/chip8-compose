@@ -155,7 +155,7 @@ fun main() {
 
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Chip8-Compoze",
+            title = "Nachos",
         ) {
             when (httpPort.value) {
                 0 -> Text("Waiting")

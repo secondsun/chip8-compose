@@ -15,7 +15,7 @@ class Chip8AssemblerTest {
         //First we check no main fails
 
        val programWithOutMain = """
-           :pain
+           : pain
               clear
               jump pain
        """.trimIndent()
@@ -29,7 +29,7 @@ class Chip8AssemblerTest {
 
        //Next we chack hasMain passes
        val programWithMain = """
-           :main
+           : main
               clear
               jump main
        """.trimIndent()
