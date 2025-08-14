@@ -236,22 +236,33 @@ class Chip8TokenizerTest {
     @Test
     fun testAssignmentOperators() {
         val program = """
-            : main
-            v1 := 0x82
-            v2 -= 0b10101010
-            v3 += 42
-            v5 |= 42
-            v4 &= 0x87
-            v5 ^= 42
-            v6 <<= 0x87
-            v7 >>= 0x87
-        """.trimIndent()
-        fail("Not yet implemented")
+             :=
+             -=
+             +=
+             |=
+             &=
+             ^=
+             <<
+             >>
+             """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(8, tokens.size)
+
+        assertTrue { tokens[0] is Token.Assignment }
+        assertTrue { tokens[1] is Token.SubtractionAssignment }
+        assertTrue { tokens[2] is Token.AdditionAssignment }
+        assertTrue { tokens[3] is Token.OrAssignment }
+        assertTrue { tokens[4] is Token.AndAssignment }
+        assertTrue { tokens[5] is Token.XorAssignment }
+        assertTrue { tokens[6] is Token.ShiftLeft }
+        assertTrue { tokens[7] is Token.ShiftRight }
+
     }
 
     /**
      * Conditional tests are <,>, <=,>=, ==, !=.
      */
+    @Test
     fun testConditionalOperators() {
         val program = """
             : main
@@ -263,7 +274,16 @@ class Chip8TokenizerTest {
                 if v0 != 5 then v1 += 2
                 
         """.trimIndent()
-        fail("Not yet implemented")
+        val tokens = tokenize(program)
+        assertEquals(50, tokens.size)
+        //50
+        assertTrue { tokens[2] is Token.If }
+        assertTrue { tokens[4] is Token.LessThan }
+        assertTrue { tokens[12] is Token.GreaterThan }
+        assertTrue { tokens[20] is Token.LessThanOrEqual }
+        assertTrue { tokens[28] is Token.GreaterThanOrEqual }
+        assertTrue { tokens[36] is Token.Equal }
+        assertTrue { tokens[44] is Token.NotEqual }
     }
 
 

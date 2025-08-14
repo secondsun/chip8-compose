@@ -64,8 +64,20 @@ sealed interface Token {
     data class Pointer(override val line: Int, override val column: Int) : Token
     data class Next(override val line: Int, override val column: Int) : Token
     data class Assignment(override val line: Int, override val column: Int) : Token
+    data class SubtractionAssignment(override val line: Int, override val column: Int) : Token
 
-
+    data class AdditionAssignment(override val line: Int, override val column: Int) : Token
+    data class OrAssignment(override val line: Int, override val column: Int) : Token
+    data class AndAssignment(override val line: Int, override val column: Int) : Token
+    data class XorAssignment(override val line: Int, override val column: Int) : Token
+    data class ShiftLeft(override val line: Int, override val column: Int) : Token
+    data class ShiftRight(override val line: Int, override val column: Int) : Token
+    data class GreaterThan(override val line: Int, override val column: Int) : Token
+    data class LessThan(override val line: Int, override val column: Int) : Token
+    data class GreaterThanOrEqual(override val line: Int, override val column: Int) : Token
+    data class LessThanOrEqual(override val line: Int, override val column: Int) : Token
+    data class Equal(override val line: Int, override val column: Int) : Token
+    data class NotEqual(override val line: Int, override val column: Int) : Token
     companion object {
         fun makeDirective(identifier: String, line: Int, startColumn: Int): Token {
             when (identifier) {

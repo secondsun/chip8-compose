@@ -101,6 +101,7 @@ fun tokenize(program: String): List<Token> {
         }
 
     }
+
     fun consumeNumber() {
         val startColumn = column
         val startLine = line
@@ -143,8 +144,22 @@ fun tokenize(program: String): List<Token> {
                         tokens.add(Token.Number(sign * parseInt(numberString, 8), line, startColumn))
                     } else {
                         when (secondDigit) {
-                            'x' -> tokens.add(Token.Number(sign * parseInt(numberString.substring(2), 16), line, startColumn))
-                            'b' -> tokens.add(Token.Number(sign * parseInt(numberString.substring(2), 2), line, startColumn))
+                            'x' -> tokens.add(
+                                Token.Number(
+                                    sign * parseInt(numberString.substring(2), 16),
+                                    line,
+                                    startColumn
+                                )
+                            )
+
+                            'b' -> tokens.add(
+                                Token.Number(
+                                    sign * parseInt(numberString.substring(2), 2),
+                                    line,
+                                    startColumn
+                                )
+                            )
+
                             else -> throw IllegalStateException("Unexpected number format $numberString at $startLine:$startColumn")
 
                         }
@@ -160,6 +175,7 @@ fun tokenize(program: String): List<Token> {
         }
 
     }
+
     fun consumeIdentifierOrDirectiveOrRegister() {
         val startColumn = column
         val identifierBuilder = StringBuilder()
@@ -184,20 +200,8 @@ fun tokenize(program: String): List<Token> {
         }
     }
 
-    fun consumeBrace() {
-        val startColumn = column
-        var character = program[index]
-        when (character) {
-            '{' -> tokens.add(Token.LBrace( line, startColumn))
-            '}' -> tokens.add(Token.RBrace( line, startColumn))
 
-        }
-        nextCharacter()
-
-    }
-
-
-    fun consumerErrorToken() {
+    fun consumeErrorToken() {
         val startColumn = column
         val unidentifierTokenBuilder = StringBuilder()
         var character = program[index]
@@ -209,10 +213,151 @@ fun tokenize(program: String): List<Token> {
             }
             character = program[index]
         }
-        tokens.add(Token.Error("Unidentified token ${unidentifierTokenBuilder.toString()} at $line, $startColumn", line, startColumn))
+        tokens.add(
+            Token.Error(
+                "Unidentified token ${unidentifierTokenBuilder.toString()} at $line, $startColumn",
+                line,
+                startColumn
+            )
+        )
     }
 
-    fun peekNextLabel(): String {
+    fun consumeBinaryAssignment() {
+        val startColumn = column
+        val character = program[index]
+        nextCharacter()
+        val nextCharacter = program[index]
+
+        if (character == '&' && nextCharacter == '=') {
+            tokens.add(Token.AndAssignment(line, startColumn))
+        } else if (character == '|' && nextCharacter == '=') {
+            tokens.add(Token.OrAssignment(line, startColumn))
+        } else if (character == '^' && nextCharacter == '=') {
+            tokens.add(Token.XorAssignment(line, startColumn))
+        } else {
+            tokens.add(
+                Token.Error(
+                    "Unexpected token $character$nextCharacter at $line, $startColumn",
+                    line,
+                    startColumn
+                )
+            )
+        }
+        nextCharacter()
+    }
+
+    fun consumeAddSubAssignment() {
+        val startColumn = column
+        val character = program[index]
+        nextCharacter()
+        val nextCharacter = program[index]
+
+        if (character == '-' && nextCharacter == '=') {
+            tokens.add(Token.SubtractionAssignment(line, startColumn))
+        } else if (character == '+' && nextCharacter == '=') {
+            tokens.add(Token.AdditionAssignment(line, startColumn))
+        } else {
+            tokens.add(
+                Token.Error(
+                    "Unexpected token $character$nextCharacter at $line, $startColumn",
+                    line,
+                    startColumn
+                )
+            )
+        }
+        nextCharacter()
+    }
+
+    fun consumeBrace() {
+        val startColumn = column
+        var character = program[index]
+        when (character) {
+            '{' -> tokens.add(Token.LBrace(line, startColumn))
+            '}' -> tokens.add(Token.RBrace(line, startColumn))
+
+        }
+        nextCharacter()
+
+    }
+
+
+    fun consumeComparison() {
+        val startColumn = column
+        val character = program[index]
+        nextCharacter()
+        if (canContinue()) {
+        val nextCharacter = program[index]
+
+        when (character) {
+            '=' -> if (nextCharacter == '=') {
+                tokens.add(Token.Equal(line, startColumn))
+                nextCharacter()
+            } else {
+                consumeErrorToken()
+            }
+
+            '!' -> if (nextCharacter == '=') {
+                tokens.add(Token.NotEqual(line, startColumn))
+                nextCharacter()
+            } else {
+                consumeErrorToken()
+            }
+
+            '>' -> if (nextCharacter == '=') {
+                tokens.add(Token.GreaterThanOrEqual(line, startColumn))
+                nextCharacter()
+            } else {
+                tokens.add(Token.GreaterThan(line, startColumn))
+            }
+
+            '<' -> if (nextCharacter == '=') {
+                tokens.add(Token.LessThanOrEqual(line, startColumn))
+                nextCharacter()
+            } else {
+                tokens.add(Token.LessThan(line, startColumn))
+            }
+        }
+        } else {
+            tokens.add(
+                Token.Error(
+                    "Unexpected end of file after $character at $line, $startColumn",
+                    line,
+                    startColumn
+                )
+            )
+        }
+
+
+    }
+
+    fun consumeShift() {
+        val startColumn = column
+        val character = program[index]
+        nextCharacter()
+        val nextCharacter = program[index]
+
+        if (character == '>' && nextCharacter == '>') {
+            tokens.add(Token.ShiftRight(line, startColumn))
+        } else if (character == '<' && nextCharacter == '<') {
+            tokens.add(Token.ShiftLeft(line, startColumn))
+        } else {
+            tokens.add(
+                Token.Error(
+                    "Unexpected token $character$nextCharacter at $line, $startColumn",
+                    line,
+                    startColumn
+                )
+            )
+        }
+
+        nextCharacter()
+    }
+
+    /**
+     * Return the next string of tokens until a whitespace is encountered.
+     */
+    fun peekNextWord(): String {
+
         val backupIndex = index
         val backupLine = line
         val backupColumn = column
@@ -220,20 +365,21 @@ fun tokenize(program: String): List<Token> {
         var toReturn = ""
 
         nextCharacter()
-        var character = program[index]
-        if (character.isLetter() || (character == '=')) { // return label
-            val identifierBuilder = StringBuilder()
-            while (!character.isWhitespace()) {
-                identifierBuilder.append(character)
-                nextCharacter()
-                if (index >= program.length) {
-                    break
-                }
-                character = program[index]
-            }
-            toReturn = identifierBuilder.toString()
-        }
+        if (canContinue()) {
 
+            var character = program[index] // return label
+                val identifierBuilder = StringBuilder()
+                while (!character.isWhitespace()) {
+                    identifierBuilder.append(character)
+                    nextCharacter()
+                    if (index >= program.length) {
+                        break
+                    }
+                    character = program[index]
+                }
+                toReturn = identifierBuilder.toString()
+
+        }
 
         index = backupIndex
         column = backupColumn
@@ -246,7 +392,7 @@ fun tokenize(program: String): List<Token> {
     while (canContinue()) {
         val character = program[index]
         if (character == ':') { //Start directive
-            val nextToken = peekNextLabel()
+            val nextToken = peekNextWord()
             if (DIRECTIVES.contains(":$nextToken")) {
                 consumeIdentifierOrDirectiveOrRegister()
             } else {
@@ -256,15 +402,34 @@ fun tokenize(program: String): List<Token> {
             consumeComment()
         } else if (character.isWhitespace()) { //consume whitespace
             consumeWhitespace()
-        } else if (character.isLetter()){ // consume identifier
+        } else if (character.isLetter()) { // consume identifier
             consumeIdentifierOrDirectiveOrRegister()
-        } else if (character.isDigit() || character == '-' || character == '+') {
+        } else if (character == '-' || character == '+') {
+            val next = peekNextWord()
+            if (next.matches(Regex("[0-9][bx0-9a-fA-F]+"))) {
+                consumeNumber()
+            } else if (next.startsWith("=")) {
+                consumeAddSubAssignment()
+            } else {
+                consumeErrorToken()
+            }
+        } else if (character == '|' || character == '&' || character == '^') {
+            consumeBinaryAssignment()
+        } else if (character == '<' || character == '>') {
+            val next = peekNextWord()
+            if (next.startsWith('<') || next.startsWith('>')) {
+                consumeShift()
+            } else {
+                consumeComparison()
+            }
+        } else if (character == '=' || character == '!') {
+            consumeComparison()
+        } else if (character.isDigit()) {
             consumeNumber()
-        } else if (character == '{' || character == '}'){
+        } else if (character == '{' || character == '}') {
             consumeBrace()
-        }
-        else {
-            consumerErrorToken()
+        } else {
+            consumeErrorToken()
         }
 
     }
@@ -273,8 +438,6 @@ fun tokenize(program: String): List<Token> {
 
 
 }
-
-
 
 
 fun isNewline(character: Char): Boolean {
