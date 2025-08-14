@@ -160,7 +160,7 @@ fun tokenize(program: String): List<Token> {
         }
 
     }
-    fun consumeIdentifierOrDirective() {
+    fun consumeIdentifierOrDirectiveOrRegister() {
         val startColumn = column
         val identifierBuilder = StringBuilder()
         var character = program[index]
@@ -175,7 +175,9 @@ fun tokenize(program: String): List<Token> {
 
         val identifier = identifierBuilder.toString()
 
-        if (DIRECTIVES.contains(identifier)) {
+        if (REGISTERS.contains(identifier)) {
+            tokens.add(Token.makeRegister(identifier, line, startColumn))
+        } else if (DIRECTIVES.contains(identifier)) {
             tokens.add(Token.makeDirective(identifier, line, startColumn))
         } else {
             tokens.add(Token.Identifier(identifier, line, startColumn))
@@ -233,7 +235,7 @@ fun tokenize(program: String): List<Token> {
         if (character == ':') { //Start directive
             val nextToken = peekNextLabel()
             if (DIRECTIVES.contains(":$nextToken")) {
-                consumeIdentifierOrDirective()
+                consumeIdentifierOrDirectiveOrRegister()
             } else {
                 colon()
             }
@@ -242,7 +244,7 @@ fun tokenize(program: String): List<Token> {
         } else if (character.isWhitespace()) { //consume whitespace
             consumeWhitespace()
         } else if (character.isLetter()){ // consume identifier
-            consumeIdentifierOrDirective()
+            consumeIdentifierOrDirectiveOrRegister()
         } else if (character.isDigit() || character == '-' || character == '+') {
             consumeNumber()
         } else {

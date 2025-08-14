@@ -1,5 +1,24 @@
 package dev.secondsun.chip8.compose.assembler
 
+val REGISTERS = setOf("v0",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5",
+    "v6",
+    "v7",
+    "v8",
+    "v9",
+    "vA",
+    "vB",
+    "vC",
+    "vD",
+    "vE",
+    "vF",
+    "i"
+)
+
 val DIRECTIVES = setOf("key",
     ":=",
     "hex",

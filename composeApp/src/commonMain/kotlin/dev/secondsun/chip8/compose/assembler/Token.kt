@@ -8,6 +8,7 @@ sealed interface Token {
     data class Number(val value: Int, override val line: Int, override val column: Int) : Token
     data class Error(val message: String, override val line: Int, override val column: Int) : Token
 
+    data class Register(val register: Registers, override val line: Int, override val column: Int) : Token
 
     data class Colon(override val line: Int, override val column: Int) : Token
     data class Return(override val line: Int, override val column: Int) : Token
@@ -120,6 +121,10 @@ sealed interface Token {
                 ":pointer" -> return Pointer(line, startColumn)
                 else -> throw IllegalArgumentException("Unknown directive: $identifier")
             }
+        }
+
+        fun makeRegister(identifier: String, line: Int, startColumn: Int): Token {
+            return Register(Registers.valueOf(identifier), line, startColumn)
         }
     }
 }

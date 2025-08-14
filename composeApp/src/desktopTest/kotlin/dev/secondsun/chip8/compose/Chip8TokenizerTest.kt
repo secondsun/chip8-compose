@@ -1,5 +1,6 @@
 package dev.secondsun.chip8.compose
 
+import dev.secondsun.chip8.compose.assembler.Registers
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.tokenize
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -162,4 +163,57 @@ class Chip8TokenizerTest {
         assertEquals(5, tokens[16].line)
         assertEquals(6, tokens[16].column)
     }
+
+
+    /**
+     * Chip-8 has 16 general-purpose 8-bit registers named v0 to vF. vF is the “flag” register”,
+     * and some operations will modify it as a side effect. i is the memory index register and
+     * is used when reading and writing memory via load, save and bcd, and also provides the
+     * address of the graphics data drawn by sprite.
+     */
+    @Test
+    fun testRegisters() {
+        val program = """
+            : main
+            v1 := 0x82
+            v2 := 0b10101010
+            v0 := 42
+            vA := -42
+            vF := +0x87
+            i := bighex vx
+        """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(21, tokens.size)
+        val v1RegisterToken = tokens[2]
+        assertTrue { v1RegisterToken is Token.Register }
+        assertEquals(Registers.v1, (v1RegisterToken as Token.Register).register)
+
+        val v2RegisterToken = tokens[5]
+        assertTrue { v2RegisterToken is Token.Register }
+        assertEquals(Registers.v2, (v2RegisterToken as Token.Register).register)
+
+        val v0RegisterToken = tokens[8]
+        assertTrue { v0RegisterToken is Token.Register }
+        assertEquals(Registers.v0, (v0RegisterToken as Token.Register).register)
+
+        val vARegisterToken = tokens[11]
+        assertTrue { vARegisterToken is Token.Register }
+        assertEquals(Registers.vA, (vARegisterToken as Token.Register).register)
+
+        val vFRegisterToken = tokens[14]
+        assertTrue { vFRegisterToken is Token.Register }
+        assertEquals(Registers.vF, (vFRegisterToken as Token.Register).register)
+
+        val iRegisterToken = tokens[17]
+        assertTrue { iRegisterToken is Token.Register }
+        assertEquals(Registers.i, (iRegisterToken as Token.Register).register)
+
+        val bighexToken = tokens[19]
+        assertTrue { bighexToken is Token.BigHex }
+
+
+
+    }
+
+
 }
