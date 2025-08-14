@@ -2,11 +2,11 @@ package dev.secondsun.chip8.compose
 
 import dev.secondsun.chip8.compose.assembler.Assembler
 import dev.secondsun.chip8.compose.assembler.Error
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class Chip8AssemblerTest {
 
@@ -42,7 +42,7 @@ class Chip8AssemblerTest {
     @Test
     fun labelDirective() {
         val programWithMain = """
-           :main
+           : main
               clear
               jump main
        """.trimIndent()

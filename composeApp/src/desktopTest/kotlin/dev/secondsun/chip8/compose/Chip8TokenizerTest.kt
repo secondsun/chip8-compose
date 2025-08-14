@@ -2,10 +2,10 @@ package dev.secondsun.chip8.compose
 
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.tokenize
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 
 
 class Chip8TokenizerTest {
@@ -88,7 +88,7 @@ class Chip8TokenizerTest {
         val tokens = tokenize(program)
         assertEquals(4, tokens.size)
         val callToken = tokens[2]
-        assertTrue { callToken is Token.CallDirective }
+        assertTrue { callToken is Token.Call }
 
     }
 
@@ -130,8 +130,36 @@ class Chip8TokenizerTest {
             : main
             v1 := 0x82
             v2 := 0b10101010
+            v3 := 42
+            v4 := -42
+            v5 := +0x87
         """.trimIndent()
         val tokens = tokenize(program)
-        assertEquals(6, tokens.size)
+        assertEquals(17, tokens.size)
+
+        assertTrue { tokens[4] is Token.Number }
+        assertEquals(130, (tokens[4] as Token.Number).value)
+        assertEquals(1, tokens[4].line)
+        assertEquals(6, tokens[4].column)
+
+        assertTrue { tokens[7] is Token.Number }
+        assertEquals(170, (tokens[7] as Token.Number).value)
+        assertEquals(2, tokens[7].line)
+        assertEquals(6, tokens[7].column)
+
+        assertTrue { tokens[10] is Token.Number }
+        assertEquals(42, (tokens[10] as Token.Number).value)
+        assertEquals(3, tokens[10].line)
+        assertEquals(6, tokens[10].column)
+
+        assertTrue { tokens[13] is Token.Number }
+        assertEquals(-42, (tokens[13] as Token.Number).value)
+        assertEquals(4, tokens[13].line)
+        assertEquals(6, tokens[13].column)
+
+        assertTrue { tokens[16] is Token.Number }
+        assertEquals(0x87, (tokens[16] as Token.Number).value)
+        assertEquals(5, tokens[16].line)
+        assertEquals(6, tokens[16].column)
     }
 }

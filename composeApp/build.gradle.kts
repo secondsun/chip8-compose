@@ -1,11 +1,8 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
-import org.gradle.kotlin.dsl.api
-import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 val monacoConsumer = configurations.create("monacoConsumer") {
     isCanBeConsumed = false
@@ -38,7 +35,8 @@ kotlin {
 
     sourceSets {
         val desktopMain by getting
-        
+        val desktopTest by getting
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -64,10 +62,22 @@ kotlin {
 
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")  // Add this line
 
         }
+
+        desktopTest.dependencies {
+            // Map kotlin.test to JUnit 5
+            implementation(libs.kotlin.test)
+            implementation(libs.junit.jupiter.api)
+
+            implementation(libs.kotlin.test.junit)
+            implementation(kotlin("test-junit5"))
+
+            // Ensure the engine is present at runtime for this target
+            runtimeOnly(libs.junit.jupiter.engine)
+
+        }
+
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
@@ -149,3 +159,7 @@ tasks.register<Copy>("copyMonacoZip") {
 }
 
 tasks.named("copyNonXmlValueResourcesForCommonMain").dependsOn("copyMonacoZip")
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
