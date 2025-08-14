@@ -184,6 +184,19 @@ fun tokenize(program: String): List<Token> {
         }
     }
 
+    fun consumeBrace() {
+        val startColumn = column
+        var character = program[index]
+        when (character) {
+            '{' -> tokens.add(Token.LBrace( line, startColumn))
+            '}' -> tokens.add(Token.RBrace( line, startColumn))
+
+        }
+        nextCharacter()
+
+    }
+
+
     fun consumerErrorToken() {
         val startColumn = column
         val unidentifierTokenBuilder = StringBuilder()
@@ -247,7 +260,10 @@ fun tokenize(program: String): List<Token> {
             consumeIdentifierOrDirectiveOrRegister()
         } else if (character.isDigit() || character == '-' || character == '+') {
             consumeNumber()
-        } else {
+        } else if (character == '{' || character == '}'){
+            consumeBrace()
+        }
+        else {
             consumerErrorToken()
         }
 

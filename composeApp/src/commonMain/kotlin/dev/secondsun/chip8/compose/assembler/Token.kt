@@ -11,6 +11,8 @@ sealed interface Token {
     data class Register(val register: Registers, override val line: Int, override val column: Int) : Token
 
     data class Colon(override val line: Int, override val column: Int) : Token
+    data class LBrace(override val line: Int, override val column: Int) : Token
+    data class RBrace(override val line: Int, override val column: Int) : Token
     data class Return(override val line: Int, override val column: Int) : Token
     data class Call(override val line: Int, override val column: Int) : Token
     data class Key(override val line: Int, override val column: Int) : Token

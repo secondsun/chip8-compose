@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import kotlin.test.junit5.JUnit5Asserter.fail
 
 
 class Chip8TokenizerTest {
@@ -211,8 +212,58 @@ class Chip8TokenizerTest {
         val bighexToken = tokens[19]
         assertTrue { bighexToken is Token.BigHex }
 
+    }
 
+    /**
+     *  a constant expression 0-15 enclosed in curly braces ({ ... }).
+     */
+    @Test
+    fun testConstantExpression() {
+        val program = """
+            : main
+            v7 := { 0b10101010 }
+        """
+        val tokens = tokenize(program)
+        assertEquals(7, tokens.size)
+        assertTrue { tokens[4] is Token.LBrace }
+        assertTrue { tokens[6] is Token.RBrace }
 
+    }
+
+    /**
+     * Assignments are :=. -=. +=. |=, &=, ^=, <<=, >>=.
+     */
+    @Test
+    fun testAssignmentOperators() {
+        val program = """
+            : main
+            v1 := 0x82
+            v2 -= 0b10101010
+            v3 += 42
+            v5 |= 42
+            v4 &= 0x87
+            v5 ^= 42
+            v6 <<= 0x87
+            v7 >>= 0x87
+        """.trimIndent()
+        fail("Not yet implemented")
+    }
+
+    /**
+     * Conditional tests are <,>, <=,>=, ==, !=.
+     */
+    fun testConditionalOperators() {
+        val program = """
+            : main
+                if v0 < 5 then v1 += 2
+                if v0 > 5 then v1 += 2
+                if v0 <= 5 then v1 += 2
+                if v0 >= 5 then v1 += 2
+                if v0 == 5 then v1 += 2
+                if v0 != 5 then v1 += 2
+                
+        """.trimIndent()
+        fail("Not yet implemented")
     }
 
 
