@@ -1,13 +1,15 @@
 package dev.secondsun.chip8.compose
 
+import chip8_compose.composeapp.generated.resources.Res
 import dev.secondsun.chip8.compose.assembler.Registers
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.tokenize
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
-import kotlin.test.junit5.JUnit5Asserter.fail
+import java.io.File
+import java.net.URI
+import java.nio.file.Paths
 
 
 class Chip8TokenizerTest {
@@ -280,11 +282,22 @@ class Chip8TokenizerTest {
         assertTrue { tokens[2] is Token.If }
         assertTrue { tokens[4] is Token.LessThan }
         assertTrue { tokens[12] is Token.GreaterThan }
+        assertTrue { tokens[16] is Token.AdditionAssignment }
         assertTrue { tokens[20] is Token.LessThanOrEqual }
         assertTrue { tokens[28] is Token.GreaterThanOrEqual }
         assertTrue { tokens[36] is Token.Equal }
         assertTrue { tokens[44] is Token.NotEqual }
     }
 
+
+    @Test
+    fun testSpritesFile() {
+        val programUri = URI.create(Res.getUri("files/sprites.8o"))
+        val program = Paths.get(programUri).toFile().readText()
+        val tokens = tokenize(program)
+        assertEquals(25, tokens.size)
+
+
+    }
 
 }
