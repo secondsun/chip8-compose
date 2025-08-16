@@ -297,7 +297,6 @@ class Chip8TokenizerTest {
         val tokens = tokenize(program)
         assertEquals(25, tokens.size)
 
-
     }
 
 }
