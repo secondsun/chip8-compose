@@ -9,7 +9,6 @@ class ParserContext(program: List<Token>) {
     val parsedTokens = mutableListOf<ParsedToken>()
 
 
-
 }
 
 fun parse(program: String): ParserContext {
@@ -68,9 +67,9 @@ fun parse(program: List<Token>): ParserContext {
                 is Token.Macro -> TODO()
                 is Token.Moniter -> TODO()
                 is Token.Native -> TODO()
-                is Token.Next -> TODO()
+                is Token.Next -> defineNext()
                 is Token.NotEqual -> TODO()
-                is Token.Number -> TODO()
+                is Token.Number -> consumeNumber()
                 is Token.OrAssignment -> TODO()
                 is Token.Org -> TODO()
                 is Token.Pitch -> TODO()
@@ -93,7 +92,7 @@ fun parse(program: List<Token>): ParserContext {
                 is Token.StringMode -> TODO()
                 is Token.SubtractionAssignment -> TODO()
                 is Token.Then -> TODO()
-                is Token.Unpack -> TODO()
+                is Token.Unpack -> consumeUnpack()
                 is Token.While -> TODO()
                 is Token.XorAssignment -> TODO()
             }
@@ -101,6 +100,85 @@ fun parse(program: List<Token>): ParserContext {
     }
     return context
 
+}
+
+private fun ParserContext.consumeUnpack() {
+    val unpack = tokenProvider.consume<Token.Unpack>()
+    val next = tokenProvider.peek()
+
+    if (next is Token.Identifier) {
+        when (next.name) {
+            "long" -> {
+                //consume long
+                tokenProvider.consume<Token.Identifier>()
+                //handle number or label
+                parsedTokens.add(handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
+            }
+            else -> {
+                //handle number or label
+                tokenProvider.consume<Token.Identifier>()
+                parsedTokens.add(handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
+            }
+        }
+    } else if (next is Token.Number) {
+        parsedTokens.add(handleNumberOrLabel(listOf(unpack), ParsedTokenType.Unpack))
+    } else {
+        tokenProvider.consume<Any>()
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(unpack, next)))
+    }
+
+}
+
+/**
+ * Consume the current token and parse it. If it is a label, confirm the label has been defined.
+ * If it is a number, add it to the parsed tokens. Returns an error token if it is not a number or label.
+ *
+ * @param tokens The list of tokens to add to
+ * @param parsedTokenType The type of the parsed token to create
+ */
+private fun ParserContext.handleNumberOrLabel(tokens: List<Token>, parsedTokenType: ParsedTokenType): ParsedToken {
+    val next = tokenProvider.peek()
+    val tokensList = tokens.toMutableList()
+    return when (next) {
+        is Token.Identifier -> {
+            tokenProvider.consume<Token.Identifier>()
+            if (defined(next.name)) {
+                tokensList.add(next)
+                ParsedToken(parsedTokenType, tokensList)
+            } else {
+                val errorToken = Token.Error("Label ${next.name} not defined", next.line, next.column)
+                tokensList.add(errorToken)
+                ParsedToken(ParsedTokenType.Error, tokensList)
+            }
+        }
+        is Token.Number -> {
+            tokenProvider.consume<Token.Number>()
+            tokensList.add(next)
+            ParsedToken(parsedTokenType, tokensList)
+        }
+        else -> {
+            tokenProvider.consume<Any>()
+            val errorToken = Token.Error("Invalid Token", next.line, next.column)
+            tokensList.add(errorToken)
+            ParsedToken(ParsedTokenType.Error, tokensList)
+        }
+    }
+}
+
+private fun ParserContext.consumeNumber() {
+    val number = tokenProvider.consume<Token.Number>()
+    if (number is Token.Number) {
+        val value = number.value
+        if (value < -128 || value > 255) {
+            val errorToken = Token.Error("Number out of range", number.line, number.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
+        } else {
+            parsedTokens.add(ParsedToken(ParsedTokenType.Number, listOf(number)))
+        }
+    } else {
+        val errorToken = Token.Error("Expected number", number.line, number.column)
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
+    }
 }
 
 private fun ParserContext.defineConstant() {
@@ -118,7 +196,7 @@ private fun ParserContext.defineConstant() {
             tokens.add(constToken)
             tokens.add(identifier)
             tokens.addAll(calulateConstantResult.first)
-            parsedTokens.add(ParsedToken(ParsedTokenType.CreateConstant, tokens))
+            parsedTokens.add(ParsedToken(ParsedTokenType.Constant, tokens))
         }
     } else {
         val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
@@ -157,6 +235,25 @@ private fun ParserContext.calulateConstant(): Pair<List<Token>, Int> {
     }
 }
 
+private fun ParserContext.defineNext() {
+    val next = tokenProvider.consume<Token.Next>()
+    val identifier = tokenProvider.consume<Token.Identifier>()
+
+    val tokens = listOf(next, identifier)
+    if (tokens.any { it is Token.Error }) {
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, tokens))
+    } else {
+        val label = (identifier as Token.Identifier).name
+        if (defined(label)) {
+            val errorToken = Token.Error("Label already defined", identifier.line, identifier.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(next, errorToken)))
+        } else {
+            labels[label] = identifier.line
+            parsedTokens.add(ParsedToken(ParsedTokenType.Next, tokens))
+        }
+    }
+}
+
 private fun ParserContext.defineLabel() {
     val colon = tokenProvider.consume<Token.Colon>()
     val identifier = tokenProvider.consume<Token.Identifier>()
@@ -171,7 +268,7 @@ private fun ParserContext.defineLabel() {
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(colon, errorToken)))
         } else {
             labels[label] = identifier.line
-            parsedTokens.add(ParsedToken(ParsedTokenType.DefineLabel, tokens))
+            parsedTokens.add(ParsedToken(ParsedTokenType.Label, tokens))
         }
     }
 }

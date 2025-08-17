@@ -4,6 +4,9 @@ data class ParsedToken(val type : ParsedTokenType,val tokens: List<Token>)
 
 enum class ParsedTokenType {
     Error,
-    DefineLabel,
-    CreateConstant
+    Label,
+    Constant,
+    Number,
+    Next,
+    Unpack
 }

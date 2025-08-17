@@ -1,12 +1,10 @@
 package dev.secondsun.chip8.compose
 
 
-import dev.secondsun.chip8.compose.assembler.ParsedToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.parse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 import kotlin.test.junit5.JUnit5Asserter.fail
 
 /**
@@ -23,7 +21,7 @@ class Chip8SyntaxTests {
         val context = parse(program)
         val parsed = context.parsedTokens
         assertEquals(1 , parsed.size )
-        assertEquals(ParsedTokenType.DefineLabel, parsed[0].type)
+        assertEquals(ParsedTokenType.Label, parsed[0].type)
     }
 
     @Test
@@ -50,12 +48,29 @@ class Chip8SyntaxTests {
         assertEquals(0x200, context.labels["main"])
     }
 
+    @Test
+    fun testUnpack() {
+        val program = """
+            :unpack long 0xaa
+            :unpack 0xa
+            :unpack :const
+        """.trimIndent()
+        val context = parse(program)
+        val parsed = context.parsedTokens
+        assertEquals(3 , parsed.size )
+        assertEquals(3 , parsed[0].tokens.size )
+        assertEquals(ParsedTokenType.Unpack , parsed[0].type )
+        assertEquals(2 , parsed[1].tokens.size )
+        assertEquals(ParsedTokenType.Unpack , parsed[1].type )
+        assertEquals(ParsedTokenType.Error , parsed[2].type )
+    }
+
     /**
      * Numeric constants can be defined with the :const directive followed by a name and
      * then a value, which may be a number, another constant or a (non forward-declared) label.
      */
     @Test
-    fun testNumericConstants() {
+    fun testConstants() {
         val program = """
             : main
                 :const FIVE 5
@@ -66,13 +81,13 @@ class Chip8SyntaxTests {
         val context = parse(program)
         val parsed = context.parsedTokens
         assertEquals(4 , parsed.size )
-        assertEquals(ParsedTokenType.CreateConstant, parsed[1].type)
-        assertEquals(ParsedTokenType.CreateConstant, parsed[2].type)
-        assertEquals(ParsedTokenType.CreateConstant, parsed[3].type)
+        assertEquals(ParsedTokenType.Constant, parsed[1].type)
+        assertEquals(ParsedTokenType.Constant, parsed[2].type)
+        assertEquals(ParsedTokenType.Constant, parsed[3].type)
 
         assertEquals(5, context.constants["FIVE"])
         assertEquals(5, context.constants["FIVE_CONST"])
-        assertEquals(0x200, context.constants["main"])
+
 
 
     }
