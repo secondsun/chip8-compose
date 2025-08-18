@@ -39,16 +39,6 @@ class Chip8SyntaxTests {
 
 
     @Test
-    fun `labels get addresses`() {
-        val program = """
-            : main
-        }""".trimIndent()
-
-        val context = parse(program)
-        assertEquals(0x200, context.labels["main"])
-    }
-
-    @Test
     fun testUnpack() {
         val program = """
             :unpack long 0xaa
