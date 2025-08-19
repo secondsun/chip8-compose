@@ -134,17 +134,34 @@ fun parse(program: List<Token>): ParserOutput {
 
 private fun ParserContext.defineMonitor() {
     val monitor = tokenProvider.consume<Token.Moniter>()
-    val identifier = tokenProvider.consume<Token.Identifier>()
+    val identifier = tokenProvider.consume<Token>()
+
     if (identifier is Token.Identifier) {
         if (defined(identifier.name)) {
             val errorToken = Token.Error("Monitor already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
-        } else {
-            val tokens = mutableListOf<Token>()
-            tokens.add(monitor)
-            tokens.add(identifier)
+            return
         }
+    } else if (identifier !is Token.Register) {
+        val errorToken = Token.Error("Expected Identifier or Register", identifier.line, identifier.column)
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
+        return
     }
+
+    val value = tokenProvider.consume<Token>()
+
+    if (value is Token.Number) {
+        parsedTokens.add(ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+    }
+    else if (value is Token.StringToken) {
+        parsedTokens.add(ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+    }
+    else {
+        val errorToken = Token.Error("Expected String or Number", value.line, value.column)
+
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, identifier, errorToken)))
+    }
+
 }
 
 private fun ParserContext.defineBreakpoint() {
