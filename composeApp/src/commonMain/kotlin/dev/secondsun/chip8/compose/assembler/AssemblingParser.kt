@@ -218,13 +218,17 @@ private fun ParserContext.defineAlias() {
             val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(aliasToken, errorToken)))
         } else {
-            val calulateConstantResult : Pair<List<Token>, IntExpression> = calulateAlias()
-            constants[identifier.name] = calulateConstantResult.second
+            val calulatedConstantResult : Pair<List<Token>, IntExpression> = calculateAlias()
+            constants[identifier.name] = calulatedConstantResult.second
             val tokens = mutableListOf<Token>()
             tokens.add(aliasToken)
             tokens.add(identifier)
-            tokens.addAll(calulateConstantResult.first)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Constant, tokens))
+            tokens.addAll(calulatedConstantResult.first)
+            if (tokens.any { it is Token.Error }) {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, tokens))
+            } else {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Alias, tokens))
+            }
         }
     } else {
         val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
@@ -242,12 +246,12 @@ private fun ParserContext.defineConstant() {
             val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(constToken, errorToken)))
         } else {
-            val calulateConstantResult : Pair<List<Token>, IntExpression> = calulateConstant()
-            constants[identifier.name] = calulateConstantResult.second
+            val calculateConstantResult : Pair<List<Token>, IntExpression> = calculateConstant()
+            constants[identifier.name] = calculateConstantResult.second
             val tokens = mutableListOf<Token>()
             tokens.add(constToken)
             tokens.add(identifier)
-            tokens.addAll(calulateConstantResult.first)
+            tokens.addAll(calculateConstantResult.first)
             parsedTokens.add(ParsedToken(ParsedTokenType.Constant, tokens))
         }
     } else {
@@ -257,14 +261,24 @@ private fun ParserContext.defineConstant() {
 
 }
 
-private fun ParserContext.calulateAlias(): Pair<List<Token>, IntExpression> {
-    return when(val next = tokenProvider.peek()) {
+private fun ParserContext.calculateAlias(): Pair<List<Token>, IntExpression> {
+    when(val next = tokenProvider.peek()) {
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
-            return Pair(listOf(next), IntExpression(listOf(next)))
+            if (next.value !in 0..15) {
+                val errorToken = Token.Error("Number out of range", next.line, next.column)
+                return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
+            } else {
+                return Pair(listOf(next), IntExpression(listOf(next)))
+            }
         } is Token.Register -> {
             tokenProvider.consume<Token.Register>()
-            return Pair(listOf(next), IntExpression(listOf(next)))
+            if (next.register == Registers.i) {
+                val errorToken = Token.Error("Cannot use i register in alias", next.line, next.column)
+                return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
+            } else {
+                return Pair(listOf(next), IntExpression(listOf(next)))
+            }
         } is Token.Identifier -> {
             tokenProvider.consume<Token.Identifier>()
             return Pair(listOf(next), IntExpression(listOf(next)))
@@ -290,7 +304,7 @@ private fun ParserContext.calulateAlias(): Pair<List<Token>, IntExpression> {
     }
 }
 
-private fun ParserContext.calulateConstant(): Pair<List<Token>, IntExpression> {
+private fun ParserContext.calculateConstant(): Pair<List<Token>, IntExpression> {
     return when(val next = tokenProvider.peek()) {
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()

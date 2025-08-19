@@ -1,9 +1,12 @@
 package dev.secondsun.chip8.compose
 
 
+import dev.secondsun.chip8.compose.assembler.ParsedToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
+import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.parse
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.junit5.JUnit5Asserter.fail
 
@@ -101,6 +104,13 @@ class Chip8SyntaxTests {
         val tokens = parsed.parsedTokens
 
         assertEquals(5, tokens.size)
+        assertTrue(tokens[0].tokens[2] is Token.Register)
+        assertEquals(ParsedTokenType.Alias, tokens[0].type)
+
+        assertTrue(tokens[1].tokens[2] is Token.Register)
+        assertTrue(tokens[2].tokens[2] is Token.LBrace)
+        assertEquals(ParsedTokenType.Error, tokens[3].type)
+        assertEquals(ParsedTokenType.Error, tokens[4].type)
 
     }
 }

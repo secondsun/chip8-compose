@@ -8,5 +8,6 @@ enum class ParsedTokenType {
     Constant,
     Number,
     Next,
-    Unpack
+    Unpack,
+    Alias
 }
