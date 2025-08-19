@@ -61,7 +61,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.BCD -> TODO()
                 is Token.Begin -> TODO()
                 is Token.BigHex -> TODO()
-                is Token.Breakpoint -> TODO()
+                is Token.Breakpoint -> defineBreakpoint()
                 is Token.Buzzer -> TODO()
                 is Token.Byte -> TODO()
                 is Token.Calc -> TODO()
@@ -92,7 +92,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Loop -> TODO()
                 is Token.Lores -> TODO()
                 is Token.Macro -> TODO()
-                is Token.Moniter -> TODO()
+                is Token.Moniter -> defineMonitor()
                 is Token.Native -> TODO()
                 is Token.Next -> defineNext()
                 is Token.NotEqual -> TODO()
@@ -124,11 +124,46 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.XorAssignment -> TODO()
                 is Token.Minus -> TODO()
                 is Token.Plus -> TODO()
+                is Token.StringToken -> TODO()
             }
         }
     }
     return context
 
+}
+
+private fun ParserContext.defineMonitor() {
+    val monitor = tokenProvider.consume<Token.Moniter>()
+    val identifier = tokenProvider.consume<Token.Identifier>()
+    if (identifier is Token.Identifier) {
+        if (defined(identifier.name)) {
+            val errorToken = Token.Error("Monitor already defined", identifier.line, identifier.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
+        } else {
+            val tokens = mutableListOf<Token>()
+            tokens.add(monitor)
+            tokens.add(identifier)
+        }
+    }
+}
+
+private fun ParserContext.defineBreakpoint() {
+    val breakpoint = tokenProvider.consume<Token.Breakpoint>()
+    val identifier = tokenProvider.consume<Token.Identifier>()
+    if (identifier is Token.Identifier) {
+        if (defined(identifier.name)) {
+            val errorToken = Token.Error("Breakpoint already defined", identifier.line, identifier.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(breakpoint, errorToken)))
+        } else {
+            val tokens = mutableListOf<Token>()
+            tokens.add(breakpoint)
+            tokens.add(identifier)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Breakpoint, listOf(breakpoint, identifier)))
+        }
+    } else {
+        val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(breakpoint, identifierError)))
+    }
 }
 
 private fun ParserContext.consumeUnpack() {

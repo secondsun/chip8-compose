@@ -17,6 +17,31 @@ import kotlin.test.junit5.JUnit5Asserter.fail
 class Chip8SyntaxTests {
 
     @Test
+    fun defineMonitor() {
+        val program = """
+            :monitor foobar 10                 # 10 bytes of RAM, starting at a label "foobar"
+            :monitor v3 4                      # registers v3-v6, shown as a block of hex digits
+            :monitor quux "x:%2i y:%2i z:%2i"  # a 3-component vector, starting at label "quux", where each digit is 2 bytes
+        """.trimIndent()
+
+        val parsed = parse(program)
+        assertEquals(3 , parsed.parsedTokens.size )
+        assertEquals(ParsedTokenType.Monitor, parsed.parsedTokens.first().type)
+
+        val tokens = parsed.parsedTokens
+
+        assertTrue( tokens[0].tokens[1] is Token.Identifier)
+        assertTrue( tokens[1].tokens[1] is Token.Register)
+        assertTrue( tokens[2].tokens[1] is Token.Identifier)
+
+
+        assertTrue( tokens[0].tokens[2] is Token.Number)
+        assertTrue( tokens[1].tokens[2] is Token.Number)
+        assertTrue( tokens[2].tokens[2] is Token.StringToken)
+
+    }
+
+    @Test
     fun defineLabel() {
         val program = """
             : main
@@ -85,6 +110,18 @@ class Chip8SyntaxTests {
 
     }
 
+
+
+    @Test
+    fun testRegisterBreakpoint() {
+        val program = """
+            :breakpoint example-breakpoint
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(1 , parsed.parsedTokens.size )
+        assertEquals(ParsedTokenType.Breakpoint, parsed.parsedTokens[0].type)
+        assertEquals("example-breakpoint", (parsed.parsedTokens[0].tokens[1] as Token.Identifier).name)
+    }
     /**
      * Registers may be given named aliases with :alias followed by a name and then a
      * register or a constant expression 0-15 enclosed in curly braces ({ ... }).

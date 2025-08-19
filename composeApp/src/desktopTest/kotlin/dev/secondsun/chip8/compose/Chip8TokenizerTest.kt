@@ -14,6 +14,36 @@ import java.nio.file.Paths
 
 class Chip8TokenizerTest {
 
+    @Test
+    fun testTokenizeStrings() {
+        val program = """
+            "Hello World!"
+            """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(1, tokens.size)
+        assertEquals("Hello World!", (tokens[0] as Token.StringToken).value)
+    }
+
+    @Test
+    fun testTokenizeStringEscape() {
+        val program = """
+            "Hello World!\t"
+            """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(1, tokens.size)
+        assertEquals("Hello World!\t", (tokens[0] as Token.StringToken).value)
+    }
+
+    @Test
+    fun testTokenizeError() {
+        val program = """
+            "
+            """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(1, tokens.size)
+        assertEquals("Unterminated string literal at 0, 0", (tokens[0] as Token.Error).message)
+    }
+
     /**
      * Tests that oops all whitespace does not crash
      */

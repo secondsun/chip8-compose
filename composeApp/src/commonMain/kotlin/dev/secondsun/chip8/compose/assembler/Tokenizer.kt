@@ -104,7 +104,6 @@ fun tokenize(program: String): List<Token> {
 
     fun consumePlusMinus() {
         val startColumn = column
-        val startLine = line
         val character = program[index]
         nextCharacter()
 
@@ -118,6 +117,59 @@ fun tokenize(program: String): List<Token> {
 
     }
 
+    fun consumeString() {
+        val startColumn = column
+        val startLine = line
+        val startIndex = index
+        val stringBuilder = StringBuilder()
+
+        nextCharacter()
+
+        if (!canContinue()) {
+            tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+            return
+        }
+
+        while (canContinue()) {
+
+            val c = program[index]
+            when (c) {
+                '"' -> {nextCharacter();break}
+                '\\' -> {
+                    nextCharacter()
+                    if (!canContinue()) {
+                        tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+                        return
+                    }
+                    val esc = program[index]
+                    when (esc) {
+                        '"' -> stringBuilder.append('"')
+                        't' -> stringBuilder.append('\t')
+                        '0' -> stringBuilder.append("\\0")
+                        'v' -> stringBuilder.append("\\v")
+                        '\\' -> stringBuilder.append('\\')
+                        'n' -> stringBuilder.append('\n')
+                        'r' -> stringBuilder.append('\r')
+                        else -> {
+                            tokens.add(
+                                Token.Error(
+                                    "Invalid escape character '$esc' in string literal at $startLine, $startColumn",line, column
+                                )
+                            )
+                        }
+                    }
+                }
+                else -> stringBuilder.append(c)
+            }
+
+            nextCharacter()
+            if (!canContinue()) {
+                tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+                return
+            }
+        }
+        tokens.add(Token.StringToken(stringBuilder.toString(), line, startColumn))
+    }
     fun consumeNumber() {
         val startColumn = column
         val startLine = line
@@ -442,6 +494,8 @@ fun tokenize(program: String): List<Token> {
             consumeComparison()
         } else if (character.isDigit()) {
             consumeNumber()
+        } else if (character == '"') {
+            consumeString()
         } else if (character == '{' || character == '}') {
             consumeBrace()
         } else {

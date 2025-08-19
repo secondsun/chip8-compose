@@ -9,5 +9,8 @@ enum class ParsedTokenType {
     Number,
     Next,
     Unpack,
-    Alias
+    Alias,
+    Breakpoint,
+    Monitor,
+    Org,
 }

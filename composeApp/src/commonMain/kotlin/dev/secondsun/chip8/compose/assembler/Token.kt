@@ -4,6 +4,10 @@ sealed interface Token {
     val line: Int
     val column: Int
 
+
+    data class StringToken(val value: String, override val line: Int, override val column: Int) : Token
+
+
     data class Identifier(val name: String, override val line: Int, override val column: Int) : Token
     data class Number(val value: Int, override val line: Int, override val column: Int) : Token
     data class Error(val message: String, override val line: Int, override val column: Int) : Token
