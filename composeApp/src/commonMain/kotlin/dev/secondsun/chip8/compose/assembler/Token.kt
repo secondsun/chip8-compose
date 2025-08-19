@@ -78,6 +78,9 @@ sealed interface Token {
     data class LessThanOrEqual(override val line: Int, override val column: Int) : Token
     data class Equal(override val line: Int, override val column: Int) : Token
     data class NotEqual(override val line: Int, override val column: Int) : Token
+    data class Plus(override val line: Int, override val column: Int) : Token
+    data class Minus(override val line: Int, override val column: Int) : Token
+
     companion object {
         fun makeDirective(identifier: String, line: Int, startColumn: Int): Token {
             when (identifier) {

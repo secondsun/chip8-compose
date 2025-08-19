@@ -75,8 +75,8 @@ class Chip8SyntaxTests {
         assertEquals(ParsedTokenType.Constant, parsed[2].type)
         assertEquals(ParsedTokenType.Constant, parsed[3].type)
 
-        assertEquals(5, context.constants["FIVE"])
-        assertEquals(5, context.constants["FIVE_CONST"])
+        assertEquals(5, context.constants["FIVE"]?.evaluate())
+        assertEquals(5, context.constants["FIVE_CONST"]?.evaluate())
 
 
 
@@ -93,7 +93,14 @@ class Chip8SyntaxTests {
             :alias x v0
             :alias CARRY_FLAG vF
             :alias NTH { 3 + CALLS }
+            :alias eye i
+            :alias toobig 16
         """.trimIndent()
-        fail("Not yet implemented")
+
+        val parsed = parse(program)
+        val tokens = parsed.parsedTokens
+
+        assertEquals(5, tokens.size)
+
     }
 }

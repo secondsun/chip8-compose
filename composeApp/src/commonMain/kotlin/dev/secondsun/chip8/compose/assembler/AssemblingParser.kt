@@ -1,22 +1,49 @@
 package dev.secondsun.chip8.compose.assembler
 
-class ParserContext(program: List<Token>) {
+data class IntExpression(val expression: List<Token>) {
+    fun evaluate(): Int {
+        if (expression.isEmpty()) {
+            return 0
+        }
+        return expression.fold(0) { acc, token ->
+            when (token) {
+                is Token.Number -> acc + token.value
+                else -> throw IllegalArgumentException("Invalid expression")
+            }
+        }
+    }
+}
 
-    val constants = mutableMapOf<String, Int>()
-    val labels = mutableMapOf<String, Int>()
-    val aliases = mutableMapOf<String, Int>()
+/**
+ * Once a program is parsed, the parserOutput includes
+ *  : A list of instructions that can be assembled into machine code
+ *  : A list of labels and their associated line numbers
+ *  : A list of constants and their associated line numbers
+ *  : A list of aliases and their associated line numbers
+ */
+interface ParserOutput {
+    val constants: Map<String, IntExpression>
+    val labels: Map<String, IntExpression>
+    val aliases: Map<String, IntExpression>
+    val parsedTokens: List<ParsedToken>
+}
+
+class ParserContext(program: List<Token>) : ParserOutput {
+
+    override val constants = mutableMapOf<String, IntExpression>()
+    override val labels = mutableMapOf<String, IntExpression>()
+    override val aliases = mutableMapOf<String, IntExpression>()
     val tokenProvider = TokenProvider(program)
-    val parsedTokens = mutableListOf<ParsedToken>()
-
+    override val parsedTokens = mutableListOf<ParsedToken>()
 
 }
 
-fun parse(program: String): ParserContext {
+fun parse(program: String): ParserOutput {
     val tokens = tokenize(program)
     return parse(tokens)
 }
 
-fun parse(program: List<Token>): ParserContext {
+fun parse(program: List<Token>): ParserOutput {
     val context = ParserContext(program)
 
 
@@ -26,7 +53,7 @@ fun parse(program: List<Token>): ParserContext {
             when (token) {
                 is Token.AdditionAssignment -> TODO()
                 is Token.Again -> TODO()
-                is Token.Alias -> TODO()
+                is Token.Alias -> defineAlias()
                 is Token.AndAssignment -> TODO()
                 is Token.Assert -> TODO()
                 is Token.Assignment -> TODO()
@@ -95,6 +122,8 @@ fun parse(program: List<Token>): ParserContext {
                 is Token.Unpack -> consumeUnpack()
                 is Token.While -> TODO()
                 is Token.XorAssignment -> TODO()
+                is Token.Minus -> TODO()
+                is Token.Plus -> TODO()
             }
         }
     }
@@ -181,6 +210,29 @@ private fun ParserContext.consumeNumber() {
     }
 }
 
+private fun ParserContext.defineAlias() {
+    val aliasToken = tokenProvider.consume<Token.Alias>()
+    val identifier = tokenProvider.consume<Token.Identifier>()
+    if (identifier is Token.Identifier) {
+        if (defined(identifier.name)) {
+            val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(aliasToken, errorToken)))
+        } else {
+            val calulateConstantResult : Pair<List<Token>, IntExpression> = calulateAlias()
+            constants[identifier.name] = calulateConstantResult.second
+            val tokens = mutableListOf<Token>()
+            tokens.add(aliasToken)
+            tokens.add(identifier)
+            tokens.addAll(calulateConstantResult.first)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Constant, tokens))
+        }
+    } else {
+        val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(aliasToken, identifierError)))
+    }
+
+}
+
 private fun ParserContext.defineConstant() {
     val constToken = tokenProvider.consume<Token.Const>()
     val identifier = tokenProvider.consume<Token.Identifier>()
@@ -190,7 +242,7 @@ private fun ParserContext.defineConstant() {
             val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(constToken, errorToken)))
         } else {
-            val calulateConstantResult : Pair<List<Token>, Int> = calulateConstant()
+            val calulateConstantResult : Pair<List<Token>, IntExpression> = calulateConstant()
             constants[identifier.name] = calulateConstantResult.second
             val tokens = mutableListOf<Token>()
             tokens.add(constToken)
@@ -205,11 +257,44 @@ private fun ParserContext.defineConstant() {
 
 }
 
-private fun ParserContext.calulateConstant(): Pair<List<Token>, Int> {
+private fun ParserContext.calulateAlias(): Pair<List<Token>, IntExpression> {
     return when(val next = tokenProvider.peek()) {
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
-            return Pair(listOf(next), next.value)
+            return Pair(listOf(next), IntExpression(listOf(next)))
+        } is Token.Register -> {
+            tokenProvider.consume<Token.Register>()
+            return Pair(listOf(next), IntExpression(listOf(next)))
+        } is Token.Identifier -> {
+            tokenProvider.consume<Token.Identifier>()
+            return Pair(listOf(next), IntExpression(listOf(next)))
+        } is Token.LBrace -> {
+            tokenProvider.consume<Token.LBrace>()
+            val expressionTokens = mutableListOf<Token>()
+            expressionTokens.add(next)
+            while (tokenProvider.peek() !is Token.RBrace) {
+                val expressionToken = tokenProvider.consume<Any>()
+                if (expressionToken is Token.Error) {
+                    break;
+                }
+                expressionTokens.add(expressionToken)
+            }
+            expressionTokens.add(tokenProvider.consume<Token.RBrace>())
+            return Pair(listOf(next), IntExpression(expressionTokens))
+        }
+        else -> {
+            tokenProvider.consume<Any>()
+            val errorToken = Token.Error("Expected number or expression", next.line, next.column)
+            return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
+        }
+    }
+}
+
+private fun ParserContext.calulateConstant(): Pair<List<Token>, IntExpression> {
+    return when(val next = tokenProvider.peek()) {
+        is Token.Number -> {
+            tokenProvider.consume<Token.Number>()
+            return Pair(listOf(next), IntExpression(listOf(next)))
         }
         is Token.Identifier -> {
             tokenProvider.consume<Token.Identifier>()
@@ -220,17 +305,17 @@ private fun ParserContext.calulateConstant(): Pair<List<Token>, Int> {
                     return Pair(listOf(next), labels[next.name]!!)
                 } else {
                     val errorToken = Token.Error("undefined identifier", next.line, next.column)
-                    return Pair(listOf(errorToken), 0)
+                    return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
                 }
             } else {
                 val errorToken = Token.Error("undefined identifier", next.line, next.column)
-                return Pair(listOf(errorToken), 0)
+                return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
             }
         }
         else -> {
             tokenProvider.consume<Any>()
             val errorToken = Token.Error("Expected number", next.line, next.column)
-            return Pair(listOf(errorToken), 0)
+            return Pair(listOf(errorToken), IntExpression(listOf(errorToken)))
         }
     }
 }
@@ -248,7 +333,7 @@ private fun ParserContext.defineNext() {
             val errorToken = Token.Error("Label already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(next, errorToken)))
         } else {
-            labels[label] = identifier.line
+            labels[label] = IntExpression(listOf(identifier))
             parsedTokens.add(ParsedToken(ParsedTokenType.Next, tokens))
         }
     }
@@ -267,7 +352,7 @@ private fun ParserContext.defineLabel() {
             val errorToken = Token.Error("Label already defined", identifier.line, identifier.column)
             parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(colon, errorToken)))
         } else {
-            labels[label] = identifier.line
+            labels[label] = IntExpression(listOf(identifier))
             parsedTokens.add(ParsedToken(ParsedTokenType.Label, tokens))
         }
     }

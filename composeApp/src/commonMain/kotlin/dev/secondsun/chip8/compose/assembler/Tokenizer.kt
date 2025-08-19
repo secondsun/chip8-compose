@@ -102,6 +102,22 @@ fun tokenize(program: String): List<Token> {
 
     }
 
+    fun consumePlusMinus() {
+        val startColumn = column
+        val startLine = line
+        val character = program[index]
+        nextCharacter()
+
+        if (character == '+') {
+            tokens.add(Token.Plus(line, startColumn))
+        } else if (character == '-') {
+            tokens.add(Token.Minus(line, startColumn))
+        } else {
+            tokens.add(Token.Error("Unexpected token $character at $line, $startColumn", line, startColumn))
+        }
+
+    }
+
     fun consumeNumber() {
         val startColumn = column
         val startLine = line
@@ -411,7 +427,7 @@ fun tokenize(program: String): List<Token> {
             } else if (next.startsWith("=")) {
                 consumeAddSubAssignment()
             } else {
-                consumeErrorToken()
+                consumePlusMinus()
             }
         } else if (character == '|' || character == '&' || character == '^') {
             consumeBinaryAssignment()
