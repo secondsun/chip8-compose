@@ -13,4 +13,5 @@ enum class ParsedTokenType {
     Breakpoint,
     Monitor,
     Org,
+    Macro,
 }

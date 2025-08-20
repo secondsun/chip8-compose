@@ -1,14 +1,14 @@
 package dev.secondsun.chip8.compose
 
 
-import dev.secondsun.chip8.compose.assembler.ParsedToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.parse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.junit5.JUnit5Asserter.fail
+import kotlin.test.assertFalse
+import kotlin.test.fail
 
 /**
  * Tests for the Chip-8 assembly syntax. This includes constant experssions, directive arguments,
@@ -25,19 +25,19 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(3 , parsed.parsedTokens.size )
+        assertEquals(3, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.Monitor, parsed.parsedTokens.first().type)
 
         val tokens = parsed.parsedTokens
 
-        assertTrue( tokens[0].tokens[1] is Token.Identifier)
-        assertTrue( tokens[1].tokens[1] is Token.Register)
-        assertTrue( tokens[2].tokens[1] is Token.Identifier)
+        assertTrue(tokens[0].tokens[1] is Token.Identifier)
+        assertTrue(tokens[1].tokens[1] is Token.Register)
+        assertTrue(tokens[2].tokens[1] is Token.Identifier)
 
 
-        assertTrue( tokens[0].tokens[2] is Token.Number)
-        assertTrue( tokens[1].tokens[2] is Token.Number)
-        assertTrue( tokens[2].tokens[2] is Token.StringToken)
+        assertTrue(tokens[0].tokens[2] is Token.Number)
+        assertTrue(tokens[1].tokens[2] is Token.Number)
+        assertTrue(tokens[2].tokens[2] is Token.StringToken)
 
     }
 
@@ -48,7 +48,7 @@ class Chip8SyntaxTests {
         """.trimIndent()
         val context = parse(program)
         val parsed = context.parsedTokens
-        assertEquals(1 , parsed.size )
+        assertEquals(1, parsed.size)
         assertEquals(ParsedTokenType.Label, parsed[0].type)
     }
 
@@ -60,11 +60,83 @@ class Chip8SyntaxTests {
         """.trimIndent()
         val context = parse(program)
         val parsed = context.parsedTokens
-        assertEquals(2 , parsed.size )
+        assertEquals(2, parsed.size)
         assertEquals(ParsedTokenType.Error, parsed[1].type)
 
     }
 
+
+    @Test
+    fun `simple macro test`() {
+        val program = """
+         
+            :macro steps-reset-level { copy-2 step-total step-level }
+            :macro steps-next-level  { copy-2 step-level step-total }
+        
+        """.trimIndent()
+
+        val parsed = parse(program)
+        val tokens = parsed.parsedTokens
+
+        assertEquals(2, tokens.size)
+        assertEquals(ParsedTokenType.Macro, tokens[0].type)
+        assertEquals(ParsedTokenType.Macro, tokens[1].type)
+
+        assertTrue(parsed.macros["steps-reset-level"]!!.first() is Token.LBrace)
+        assertEquals(5, parsed.macros["steps-reset-level"]!!.size)
+
+    }
+
+    @Test
+    fun testMultiLineMacros() {
+        val program = """
+         
+            :macro steps-show-digits SRC {
+            	i := SRC
+            	load v0
+            	i := step-bcd
+            	bcd v0
+            	load v2
+            	i := hex v1
+            	sprite v3 v4 5
+            	v3 += 5
+            	i := hex v2
+            	sprite v3 v4 5
+            	v3 += 5
+            }
+        """
+
+        val parsed = parse(program)
+        val tokens = parsed.parsedTokens
+
+        assertEquals(1, tokens.size)
+        assertTrue(parsed.macros["steps-show-digits"]!!.first() is Token.Identifier)
+        assertEquals("SRC", (parsed.macros["steps-show-digits"]!!.first() as Token.Identifier).name)
+        assertTrue { parsed.macros["steps-show-digits"]!!.last() is Token.RBrace }
+        assertFalse { parsed.macros["steps-show-digits"]!!.any { it is Token.Error } }
+    }
+    @Test
+    fun testMacroWithCommentAndNestedRBrace() {
+        val program = """
+            :macro steps-show { # at v3,v4
+            	steps-show-digits step-level
+            	:calc low-digits { 1 + step-level }
+            	steps-show-digits low-digits
+            }
+        """
+
+        val parsed = parse(program)
+        val tokens = parsed.parsedTokens
+        assertTrue(parsed.macros["steps-show"]!!.first() is Token.LBrace)
+        assertTrue(parsed.macros["steps-show"]!!.last() is Token.RBrace)
+        assertEquals(13, parsed.macros["steps-show"]!!.size)
+
+
+        assertEquals(ParsedTokenType.Macro, tokens[0].type)
+        assertTrue(parsed.macros["steps-show"]!!.last() is Token.RBrace)
+
+        assertEquals(1, tokens.size)
+    }
 
     @Test
     fun testUnpack() {
@@ -75,12 +147,12 @@ class Chip8SyntaxTests {
         """.trimIndent()
         val context = parse(program)
         val parsed = context.parsedTokens
-        assertEquals(3 , parsed.size )
-        assertEquals(3 , parsed[0].tokens.size )
-        assertEquals(ParsedTokenType.Unpack , parsed[0].type )
-        assertEquals(2 , parsed[1].tokens.size )
-        assertEquals(ParsedTokenType.Unpack , parsed[1].type )
-        assertEquals(ParsedTokenType.Error , parsed[2].type )
+        assertEquals(3, parsed.size)
+        assertEquals(3, parsed[0].tokens.size)
+        assertEquals(ParsedTokenType.Unpack, parsed[0].type)
+        assertEquals(2, parsed[1].tokens.size)
+        assertEquals(ParsedTokenType.Unpack, parsed[1].type)
+        assertEquals(ParsedTokenType.Error, parsed[2].type)
     }
 
     /**
@@ -98,7 +170,7 @@ class Chip8SyntaxTests {
 
         val context = parse(program)
         val parsed = context.parsedTokens
-        assertEquals(4 , parsed.size )
+        assertEquals(4, parsed.size)
         assertEquals(ParsedTokenType.Constant, parsed[1].type)
         assertEquals(ParsedTokenType.Constant, parsed[2].type)
         assertEquals(ParsedTokenType.Constant, parsed[3].type)
@@ -107,9 +179,7 @@ class Chip8SyntaxTests {
         assertEquals(5, context.constants["FIVE_CONST"]?.evaluate())
 
 
-
     }
-
 
 
     @Test
@@ -118,10 +188,11 @@ class Chip8SyntaxTests {
             :breakpoint example-breakpoint
         """.trimIndent()
         val parsed = parse(program)
-        assertEquals(1 , parsed.parsedTokens.size )
+        assertEquals(1, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.Breakpoint, parsed.parsedTokens[0].type)
         assertEquals("example-breakpoint", (parsed.parsedTokens[0].tokens[1] as Token.Identifier).name)
     }
+
     /**
      * Registers may be given named aliases with :alias followed by a name and then a
      * register or a constant expression 0-15 enclosed in curly braces ({ ... }).

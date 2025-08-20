@@ -370,7 +370,7 @@ Compiler.prototype.checkName = function(name, kind) {
 	}
 	return name;
 }
-Compiler.prototype.identifier = function(kind){
+Compiler.prototype.	identifier = function(kind){
 	var n = this.next();
 	if (typeof n != 'string') throw `Expected a name for a ${kind}, got ${n}.`;
 	return this.checkName(n,kind);
