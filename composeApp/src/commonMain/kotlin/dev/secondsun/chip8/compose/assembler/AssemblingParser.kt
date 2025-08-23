@@ -141,6 +141,8 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.RParen -> TODO()
                 is Token.At -> TODO()
                 is Token.Semicolon -> TODO()
+                is Token.ShiftLeftAssign -> TODO()
+                is Token.ShiftRightAssign -> TODO()
             }
         }
     }

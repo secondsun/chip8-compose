@@ -84,6 +84,8 @@ sealed interface Token {
     data class XorAssignment(override val line: Int, override val column: Int) : Token
     data class ShiftLeft(override val line: Int, override val column: Int) : Token
     data class ShiftRight(override val line: Int, override val column: Int) : Token
+    data class ShiftLeftAssign(override val line: Int, override val column: Int) : Token
+    data class ShiftRightAssign(override val line: Int, override val column: Int) : Token
     data class GreaterThan(override val line: Int, override val column: Int) : Token
     data class LessThan(override val line: Int, override val column: Int) : Token
     data class GreaterThanOrEqual(override val line: Int, override val column: Int) : Token

@@ -469,10 +469,24 @@ fun tokenize(program: String): List<Token> {
         val nextCharacter = program[index]
 
         if (character == '>' && nextCharacter == '>') {
-            tokens.add(Token.ShiftRight(line, startColumn))
+            nextCharacter()
+            if (program[index] == '=') {
+                nextCharacter()
+                tokens.add(Token.ShiftRightAssign(line, startColumn))
+            } else {
+                tokens.add(Token.ShiftRight(line, startColumn))
+            }
         } else if (character == '<' && nextCharacter == '<') {
-            tokens.add(Token.ShiftLeft(line, startColumn))
+            nextCharacter()
+            if (program[index] == '=') {
+                nextCharacter()
+                tokens.add(Token.ShiftLeftAssign(line, startColumn))
+
+            } else {
+                tokens.add(Token.ShiftLeft(line, startColumn))
+            }
         } else {
+            nextCharacter()
             tokens.add(
                 Token.Error(
                     "Unexpected token $character$nextCharacter at $line, $startColumn",
@@ -482,7 +496,7 @@ fun tokenize(program: String): List<Token> {
             )
         }
 
-        nextCharacter()
+
     }
 
     /**
