@@ -135,6 +135,12 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.StringToken -> TODO()
                 is Token.Divide -> TODO()
                 is Token.Multiply -> TODO()
+                is Token.BinaryAnd -> TODO()
+                is Token.BinaryOr -> TODO()
+                is Token.LParen -> TODO()
+                is Token.RParen -> TODO()
+                is Token.At -> TODO()
+                is Token.Semicolon -> TODO()
             }
         }
     }

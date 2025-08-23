@@ -14,6 +14,13 @@ sealed interface Token {
 
     data class Register(val register: Registers, override val line: Int, override val column: Int) : Token
     data class Multiply(override val line: Int, override val column: Int) : Token
+    data class BinaryOr(override val line: Int, override val column: Int) : Token
+    data class BinaryAnd(override val line: Int, override val column: Int) : Token
+    data class LParen(override val line: Int, override val column: Int) : Token
+    data class RParen(override val line: Int, override val column: Int) : Token
+    data class At(override val line: Int, override val column: Int) : Token
+    data class Semicolon(override val line: Int, override val column: Int) : Token
+
     data class Divide(override val line: Int, override val column: Int) : Token
     data class Colon(override val line: Int, override val column: Int) : Token
     data class LBrace(override val line: Int, override val column: Int) : Token

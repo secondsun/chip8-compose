@@ -1,6 +1,7 @@
 package dev.secondsun.chip8.compose.assembler
 
 import java.lang.Integer.parseInt
+import kotlin.text.get
 
 
 fun tokenize(program: String): List<Token> {
@@ -336,6 +337,19 @@ fun tokenize(program: String): List<Token> {
         nextCharacter()
     }
 
+
+    fun consumeBinaryOperator() {
+        val startColumn = column
+        val character = program[index]
+        when (character) {
+            '|' -> tokens.add(Token.BinaryOr(line, startColumn))
+            '&' -> tokens.add(Token.BinaryAnd(line, startColumn))
+
+        }
+        nextCharacter()
+    }
+
+
     fun consumeBrace() {
         val startColumn = column
         var character = program[index]
@@ -344,6 +358,34 @@ fun tokenize(program: String): List<Token> {
             '}' -> tokens.add(Token.RBrace(line, startColumn))
 
         }
+        nextCharacter()
+
+    }
+    fun consumeParen() {
+        val startColumn = column
+        var character = program[index]
+        when (character) {
+            '(' -> tokens.add(Token.LParen(line, startColumn))
+            ')' -> tokens.add(Token.RParen(line, startColumn))
+
+        }
+        nextCharacter()
+
+    }
+
+    fun consumeAt() {
+        val startColumn = column
+        var character = program[index]
+        tokens.add(Token.At(line, startColumn))
+        nextCharacter()
+
+    }
+
+    fun consumeSemi() {
+        val startColumn = column
+        var character = program[index]
+        tokens.add(Token.Semicolon(line, startColumn))
+
         nextCharacter()
 
     }
@@ -504,7 +546,12 @@ fun tokenize(program: String): List<Token> {
                 consumePlusMinus()
             }
         } else if (character == '|' || character == '&' || character == '^') {
-            consumeBinaryAssignment()
+            val next = peekNextWord()
+            if (next == "=") {
+                consumeBinaryAssignment()
+            } else {
+                consumeBinaryOperator()
+            }
         } else if (character == '<' || character == '>') {
             val next = peekNextWord()
             if (next.startsWith('<') || next.startsWith('>')) {
@@ -520,6 +567,14 @@ fun tokenize(program: String): List<Token> {
             consumeString()
         } else if (character == '*') {
             consumeMultiply()
+        } else if (character == '(' || character ==')') {
+            consumeParen()
+        } else if (character == ';') {
+            consumeSemi()
+        } else if (character == '@') {
+            consumeAt()
+        } else if (character == '/') {
+            consumeDivide()
         } else if (character == '{' || character == '}') {
             consumeBrace()
         } else {

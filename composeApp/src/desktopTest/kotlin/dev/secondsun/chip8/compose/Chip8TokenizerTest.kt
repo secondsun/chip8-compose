@@ -328,6 +328,16 @@ class Chip8TokenizerTest {
         val program = Paths.get(programUri).toFile().readText()
         val tokens = tokenize(program)
         assertEquals(25, tokens.size)
+        assertTrue { tokens.none { it is Token.Error } }
+
+    }
+    @Test
+    fun testBigFile() {
+        val programUri = URI.create(Res.getUri("files/big.8o"))
+        val program = Paths.get(programUri).toFile().readText()
+        val tokens = tokenize(program)
+        tokens.filter { it is Token.Error }.forEach { println(it) }
+        assertTrue { tokens.none { it is Token.Error } }
 
     }
 
