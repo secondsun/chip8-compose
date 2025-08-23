@@ -26,7 +26,7 @@ interface ParserOutput {
     val labels: Map<String, IntExpression>
     val aliases: Map<String, IntExpression>
     val parsedTokens: List<ParsedToken>
-
+    val stringModes: Map<String, List<Token>>
     val macros: Map<String, List<Token>> 
 }
 
@@ -38,6 +38,7 @@ class ParserContext(program: List<Token>) : ParserOutput {
     val tokenProvider = TokenProvider(program)
     override val parsedTokens = mutableListOf<ParsedToken>()
     override val macros = mutableMapOf<String, List<Token>>()
+    override val stringModes = mutableMapOf<String, List<Token>>()
 
 }
 
@@ -123,7 +124,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.ShiftLeft -> TODO()
                 is Token.ShiftRight -> TODO()
                 is Token.Sprite -> TODO()
-                is Token.StringMode -> TODO()
+                is Token.StringMode -> defineStringMode()
                 is Token.SubtractionAssignment -> TODO()
                 is Token.Then -> TODO()
                 is Token.Unpack -> consumeUnpack()
@@ -132,10 +133,48 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Minus -> TODO()
                 is Token.Plus -> TODO()
                 is Token.StringToken -> TODO()
+                is Token.Divide -> TODO()
+                is Token.Multiply -> TODO()
             }
         }
     }
     return context
+
+}
+
+private fun ParserContext.defineStringMode() {
+    val stringMode = tokenProvider.consume<Token.StringMode>()
+    val stringModeName = tokenProvider.consume<Token.Identifier>()
+
+
+    if (stringModeName is Token.Identifier) {
+        val stringModeAlphabet = tokenProvider.consume<Token.StringToken>()
+        if (stringModeAlphabet is Token.StringToken) {
+            val stringModeBody = consumeMacroBody()
+            if (!stringModeBody.any { it is Token.Error }) {
+                parsedTokens.add(ParsedToken(ParsedTokenType.StringMode, buildList { add(stringMode); add(stringModeName);add(stringModeAlphabet); addAll(stringModeBody) }))
+                stringModes[stringModeName.name] = stringModeBody;
+            } else {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet) + stringModeBody))
+            }
+        } else {
+            if(stringModeAlphabet is Token.Error)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet)))
+            else {
+                val errorToken = Token.Error("Expected StringToken", stringModeAlphabet.line, stringModeAlphabet.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, errorToken)))
+            }
+
+        }
+
+    } else {
+        if (stringModeName is Token.Error)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName)))
+        else {
+            val errorToken = Token.Error("Expected Identifier", stringModeName.line, stringModeName.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, errorToken)))
+        }
+    }
 
 }
 
@@ -530,9 +569,9 @@ private fun ParserContext.defineLabel() {
 }
 
 private fun ParserContext.defined(label: String): Boolean {
-    return labels.containsKey(label) || aliases.containsKey(label) || constants.containsKey(label) || macros.containsKey(
-        label
-    )
+    return labels.containsKey(label) || aliases.containsKey(label) ||
+            constants.containsKey(label) || macros.containsKey(label) ||
+            stringModes.containsKey(label)
 }
 
 class TokenProvider(val program: List<Token>) {

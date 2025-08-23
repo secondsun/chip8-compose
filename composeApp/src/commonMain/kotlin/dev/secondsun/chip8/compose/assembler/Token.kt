@@ -13,7 +13,8 @@ sealed interface Token {
     data class Error(val message: String, override val line: Int, override val column: Int) : Token
 
     data class Register(val register: Registers, override val line: Int, override val column: Int) : Token
-
+    data class Multiply(override val line: Int, override val column: Int) : Token
+    data class Divide(override val line: Int, override val column: Int) : Token
     data class Colon(override val line: Int, override val column: Int) : Token
     data class LBrace(override val line: Int, override val column: Int) : Token
     data class RBrace(override val line: Int, override val column: Int) : Token

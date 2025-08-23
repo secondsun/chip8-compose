@@ -349,6 +349,28 @@ fun tokenize(program: String): List<Token> {
     }
 
 
+    fun consumeDivide() {
+        val startColumn = column
+        var character = program[index]
+        when (character) {
+            '/' -> tokens.add(Token.Divide(line, startColumn))
+
+        }
+        nextCharacter()
+
+    }
+
+    fun consumeMultiply() {
+        val startColumn = column
+        var character = program[index]
+        when (character) {
+            '*' -> tokens.add(Token.Multiply(line, startColumn))
+        }
+        nextCharacter()
+
+    }
+
+
     fun consumeComparison() {
         val startColumn = column
         val character = program[index]
@@ -496,6 +518,8 @@ fun tokenize(program: String): List<Token> {
             consumeNumber()
         } else if (character == '"') {
             consumeString()
+        } else if (character == '*') {
+            consumeMultiply()
         } else if (character == '{' || character == '}') {
             consumeBrace()
         } else {

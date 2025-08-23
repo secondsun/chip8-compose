@@ -3,6 +3,7 @@ package dev.secondsun.chip8.compose
 import chip8_compose.composeapp.generated.resources.Res
 import dev.secondsun.chip8.compose.assembler.Registers
 import dev.secondsun.chip8.compose.assembler.Token
+import dev.secondsun.chip8.compose.assembler.parse
 import dev.secondsun.chip8.compose.assembler.tokenize
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import java.net.URI
 import java.nio.file.Paths
+import kotlin.test.assertNotNull
 
 
 class Chip8TokenizerTest {

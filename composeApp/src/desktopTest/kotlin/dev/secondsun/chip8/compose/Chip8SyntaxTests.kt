@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 /**
@@ -86,6 +87,69 @@ class Chip8SyntaxTests {
         assertEquals(5, parsed.macros["steps-reset-level"]!!.size)
 
     }
+
+
+
+    @Test
+    fun `basic test of string mode`() {
+        val program = """
+            :stringmode print "ADEGHILMNOPRSTVY" {
+            	:calc S { let-A + VALUE * 4 }
+            	i := S
+            	sprite v0 v1 4
+            	# compute the width of each glyph statically:
+            	:calc p { ( @ S ) | ( @ 1 + S ) | ( @ 2 + S ) | ( @ 3 + S ) }
+            	:calc w { 9 - ( log p & - p ) / log 2 }
+            	v0 += w
+            }
+        """.trimIndent()
+
+        val parsed = parse(program)
+
+        assertEquals(1, parsed.parsedTokens.size)
+        assertNotNull(parsed.stringModes["print"])
+
+    }
+
+
+    @Test
+    fun `string mode should only define a character once`() {
+        fail()
+    }
+
+    @Test
+    fun `calc can be reassigned`() {
+        fail()
+    }
+
+    @Test
+    fun `string mode should allow additions to the alphabet`() {
+
+
+
+        val program = """
+            :stringmode print " " {
+            	v0 += 4
+            }
+            
+            :stringmode print "ADEGHILMNOPRSTVY" {
+            	:calc S { let-A + VALUE * 4 }
+            	i := S
+            	sprite v0 v1 4
+            	# compute the width of each glyph statically:
+            	:calc p { ( @ S ) | ( @ 1 + S ) | ( @ 2 + S ) | ( @ 3 + S ) }
+            	:calc w { 9 - ( log p & - p ) / log 2 }
+            	v0 += w
+            }
+        """.trimIndent()
+
+        val parsed = parse(program)
+
+        assertEquals(2, parsed.parsedTokens.size)
+        assertNotNull(parsed.stringModes["print"])
+
+    }
+
 
     @Test
     fun testMultiLineMacros() {
