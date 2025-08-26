@@ -1,7 +1,11 @@
 package dev.secondsun.chip8.compose
 
 import dev.secondsun.chip8.compose.assembler.StringMode
+import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.tokenize
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -44,20 +48,20 @@ TODO()
         TODO($$"throw `String mode '${token}' is not defined for the character '${char}'.`;\n")
     }
 
-    @Test
-    fun `test constants CALL, VALUE, INDEX, and CHAR`() {
+    @ParameterizedTest
+    @CsvSource(value = ["CALLS:1", "VALUE:2", "INDEX:1", "CHAR:65"], delimiter = ':')
+    fun `test constants CALLS, VALUE, INDEX, and CHAR`(method:String, expected:String) {
         val macroBody = """
-            	:calc S { let-A + CALL * 4 }
-                :calc S { let-A + VALUE * 4 }
-                :calc S { let-A + INDEX * 4 }
-                :calc S { let-A + CHAR * 4 }
+            	:calc S { let-A + ${method} * 4 }
         """.trimIndent()
 
         val tokens = tokenize(macroBody)
         val stringMode = StringMode("paint")
-        stringMode.addAlphabet(" ", tokens)
+        stringMode.addAlphabet("PCA", tokens)
 
-        val replacedTokens = stringMode.evaluate(" ")
+        val replacedTokens = stringMode.evaluate("CA")
+        assertTrue( replacedTokens[14] is Token.Number)
+        assertEquals(expected, (replacedTokens[14] as Token.Number).value.toString())
 
 
     }

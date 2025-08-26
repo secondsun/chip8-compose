@@ -75,6 +75,7 @@ kotlin {
 
             // Ensure the engine is present at runtime for this target
             runtimeOnly(libs.junit.jupiter.engine)
+            implementation(libs.junit.jupiter.params)
 
         }
 
