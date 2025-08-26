@@ -4,6 +4,7 @@ import dev.secondsun.chip8.compose.assembler.StringMode
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.tokenize
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import kotlin.test.Test
@@ -13,7 +14,10 @@ class StringModeTest {
 
     @Test
     fun `string mode should only define a character once`() {
-TODO()
+        val stringMode = StringMode("paint")
+        assertThrows<IllegalStateException>  {stringMode.addAlphabet("ACA", listOf<Token>()) }
+
+
     }
 
     @Test
@@ -45,7 +49,16 @@ TODO()
 
     @Test
     fun `string mode should throw exception  is undefined character is used`() {
-        TODO($$"throw `String mode '${token}' is not defined for the character '${char}'.`;\n")
+        val macroBody = """
+            	:calc S { let-A + VALUE * 4 }
+        """.trimIndent()
+
+        val tokens = tokenize(macroBody)
+        val stringMode = StringMode("paint")
+        stringMode.addAlphabet("PCA", tokens)
+
+        assertThrows<IllegalStateException>  { stringMode.evaluate("Z") }
+
     }
 
     @ParameterizedTest
