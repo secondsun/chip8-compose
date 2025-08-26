@@ -25,9 +25,10 @@ interface ParserOutput {
     val constants: Map<String, IntExpression>
     val labels: Map<String, IntExpression>
     val aliases: Map<String, IntExpression>
+    val mutables: Map<String, IntExpression>
     val parsedTokens: List<ParsedToken>
-    val stringModes: Map<String, List<Token>>
-    val macros: Map<String, List<Token>> 
+    val macros: Map<String, List<Token>>
+    val stringModes: Map<String, StringMode>
 }
 
 class ParserContext(program: List<Token>) : ParserOutput {
@@ -35,10 +36,11 @@ class ParserContext(program: List<Token>) : ParserOutput {
     override val constants = mutableMapOf<String, IntExpression>()
     override val labels = mutableMapOf<String, IntExpression>()
     override val aliases = mutableMapOf<String, IntExpression>()
+    override val mutables = mutableMapOf<String, IntExpression>()
     val tokenProvider = TokenProvider(program)
     override val parsedTokens = mutableListOf<ParsedToken>()
     override val macros = mutableMapOf<String, List<Token>>()
-    override val stringModes = mutableMapOf<String, List<Token>>()
+    override val stringModes = mutableMapOf<String, StringMode>()
 
 }
 
@@ -68,7 +70,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Breakpoint -> defineBreakpoint()
                 is Token.Buzzer -> TODO()
                 is Token.Byte -> TODO()
-                is Token.Calc -> TODO()
+                is Token.Calc -> handleCalc()
                 is Token.Call -> TODO()
                 is Token.Clear -> TODO()
                 is Token.Colon -> defineLabel()
@@ -160,8 +162,18 @@ private fun ParserContext.defineStringMode() {
         if (stringModeAlphabet is Token.StringToken) {
             val stringModeBody = consumeMacroBody()
             if (!stringModeBody.any { it is Token.Error }) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.StringMode, buildList { add(stringMode); add(stringModeName);add(stringModeAlphabet); addAll(stringModeBody) }))
-                stringModes[stringModeName.name] = stringModeBody;
+                try {
+                    val stmName = stringModeName.name
+
+                    val mode = stringModes.computeIfAbsent(stmName) { StringMode(stmName) }
+                    mode.addAlphabet(stringModeAlphabet.value, stringModeBody)
+                    parsedTokens.add(ParsedToken(ParsedTokenType.StringMode, buildList { add(stringMode); add(stringModeName);add(stringModeAlphabet); addAll(stringModeBody) }))
+                } catch (e: Exception) {
+                    val alphabetError = Token.Error("Invalid Alphabet : ${e.message}", stringModeAlphabet.line, stringModeAlphabet.column)
+                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, buildList { add(stringMode); add(stringModeName);add(alphabetError); addAll(stringModeBody) }))
+                }
+
+
             } else {
                 parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet) + stringModeBody))
             }
@@ -555,6 +567,52 @@ private fun ParserContext.defineNext() {
             parsedTokens.add(ParsedToken(ParsedTokenType.Next, tokens))
         }
     }
+}
+
+private fun ParserContext.handleCalc() {
+    val calc = tokenProvider.consume<Token.Calc>()
+    val next = tokenProvider.peek()
+
+    if (next is Token.Identifier) {
+        val identifier = tokenProvider.consume<Token.Identifier>() as Token.Identifier
+        val bodyStart = tokenProvider.peek()
+
+        if (!defined(identifier.name)) {
+            when(bodyStart) {
+                 is Token.LBrace -> {
+                    val body = consumeMacroBody()
+                    if (!body.any { it is Token.Error }) {
+                        mutables[identifier.name] = IntExpression(body)
+                        parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier) + body))
+                    } else {
+                        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, identifier) + body))
+                    }
+                 }
+                is Token.Number -> {
+                    val number = tokenProvider.consume<Token.Number>()
+                    parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, number)))
+                }
+                is Token.Identifier -> {
+                    val label = tokenProvider.consume<Token.Identifier>() as Token.Identifier
+                    parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, label)))
+                }
+                else -> {
+                    tokenProvider.consume<Any>()
+                    val errorToken = Token.Error("Expected number or expression", bodyStart.line, bodyStart.column)
+                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, identifier, errorToken)))
+                    return
+                }
+            }
+        } else {
+            //identifier is already defined
+            val errorToken = Token.Error("Identifier already defined", identifier.line, identifier.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, errorToken)))
+        }
+
+    } else {
+        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, next)))
+    }
+
 }
 
 private fun ParserContext.defineLabel() {

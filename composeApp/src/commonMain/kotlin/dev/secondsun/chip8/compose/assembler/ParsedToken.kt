@@ -14,5 +14,7 @@ enum class ParsedTokenType {
     Monitor,
     Org,
     Macro,
-    StringMode
+    StringMode,
+    Calc
+
 }

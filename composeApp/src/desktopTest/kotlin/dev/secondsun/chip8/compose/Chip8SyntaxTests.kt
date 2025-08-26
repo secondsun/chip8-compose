@@ -114,12 +114,29 @@ class Chip8SyntaxTests {
 
     @Test
     fun `string mode should only define a character once`() {
-        fail()
+        val program = """
+            :stringmode print "AAD" {}
+        """.trimIndent()
+
+        val parsed = parse(program)
+        assertEquals(1, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Error, parsed.parsedTokens[0].type)
+        assertTrue(parsed.parsedTokens[0].tokens[2] is Token.Error)
+
     }
 
     @Test
     fun `calc can be reassigned`() {
-        fail()
+        val program = """
+            :calc S { 42 }
+            :calc S { 47 }
+        """.trimIndent()
+
+        val pased = parse(program)
+        assertEquals(2, pased.parsedTokens.size)
+        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[0].type )
+        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[1].type )
+        assertEquals(47, pased.mutables["S"]?.evaluate())
     }
 
     @Test
