@@ -37,6 +37,14 @@ fun tokenize(program: String): List<Token> {
         return index < program.length
     }
 
+    fun getCharacter() :Char{
+        return if (canContinue()) {
+            program[index]
+        } else {
+            Char.MIN_VALUE
+        }
+    }
+
     /**
      * Advance the tokenizer state to the next line. This should be called when a newline is consumed.
      * It advances the line, index, and column accordingly but does NOT handle whitespace or do any processing.
@@ -46,7 +54,7 @@ fun tokenize(program: String): List<Token> {
         index++
 
         //Handle windows \r\n
-        if (canContinue() && (program[index] == '\r' || program[index] == '\n')) {
+        if (canContinue() && (getCharacter() == '\r' || getCharacter() == '\n')) {
             index++
         }
 
@@ -70,7 +78,7 @@ fun tokenize(program: String): List<Token> {
     }
 
     fun consumeWhitespace() {
-        var character = program[index]
+        var character = getCharacter()
         while (character.isWhitespace()) {
             if (isNewline(character)) {
                 nextLine()
@@ -80,14 +88,14 @@ fun tokenize(program: String): List<Token> {
             if (index >= program.length) {
                 break
             }
-            character = program[index]
+            character = getCharacter()
         }
 
     }
 
     fun consumeComment() {
         nextCharacter()//Consume #
-        var character = program[index]
+        var character = getCharacter()
         while (canContinue()) {
             if (isNewline(character)) {
                 nextLine()
@@ -98,14 +106,14 @@ fun tokenize(program: String): List<Token> {
             if (!canContinue()) {
                 break
             }
-            character = program[index]
+            character = getCharacter()
         }
 
     }
 
     fun consumePlusMinus() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         nextCharacter()
 
         if (character == '+') {
@@ -133,7 +141,7 @@ fun tokenize(program: String): List<Token> {
 
         while (canContinue()) {
 
-            val c = program[index]
+            val c = getCharacter()
             when (c) {
                 '"' -> {nextCharacter();break}
                 '\\' -> {
@@ -142,7 +150,7 @@ fun tokenize(program: String): List<Token> {
                         tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
                         return
                     }
-                    val esc = program[index]
+                    val esc = getCharacter()
                     when (esc) {
                         '"' -> stringBuilder.append('"')
                         't' -> stringBuilder.append('\t')
@@ -176,19 +184,19 @@ fun tokenize(program: String): List<Token> {
         val startLine = line
         val numberBuilder = StringBuilder()
         var sign = 1
-        var character = program[index]
+        var character = getCharacter()
 
         if (character == '-') {
             sign = -1
             nextCharacter()
             if (canContinue()) {
-                character = program[index]
+                character = getCharacter()
             }
         } else if (character == '+') {
             sign = 1
             nextCharacter()
             if (canContinue()) {
-                character = program[index]
+                character = getCharacter()
             }
         }
 
@@ -197,7 +205,7 @@ fun tokenize(program: String): List<Token> {
             numberBuilder.append(character)
             nextCharacter()
             if (canContinue()) {
-                character = program[index]
+                character = getCharacter()
                 if (character.isWhitespace()) {
                     break;
                 }
@@ -248,14 +256,14 @@ fun tokenize(program: String): List<Token> {
     fun consumeIdentifierOrDirectiveOrRegister() {
         val startColumn = column
         val identifierBuilder = StringBuilder()
-        var character = program[index]
+        var character = getCharacter()
         while (!character.isWhitespace()) {
             identifierBuilder.append(character)
             nextCharacter()
             if (index >= program.length) {
                 break
             }
-            character = program[index]
+            character = getCharacter()
         }
 
         val identifier = identifierBuilder.toString()
@@ -273,14 +281,14 @@ fun tokenize(program: String): List<Token> {
     fun consumeErrorToken() {
         val startColumn = column
         val unidentifierTokenBuilder = StringBuilder()
-        var character = program[index]
+        var character = getCharacter()
         while (!character.isWhitespace()) {
             unidentifierTokenBuilder.append(character)
             nextCharacter()
             if (index >= program.length) {
                 break
             }
-            character = program[index]
+            character = getCharacter()
         }
         tokens.add(
             Token.Error(
@@ -293,9 +301,9 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeBinaryAssignment() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         nextCharacter()
-        val nextCharacter = program[index]
+        val nextCharacter = getCharacter()
 
         if (character == '&' && nextCharacter == '=') {
             tokens.add(Token.AndAssignment(line, startColumn))
@@ -317,9 +325,9 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeAddSubAssignment() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         nextCharacter()
-        val nextCharacter = program[index]
+        val nextCharacter = getCharacter()
 
         if (character == '-' && nextCharacter == '=') {
             tokens.add(Token.SubtractionAssignment(line, startColumn))
@@ -340,7 +348,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeBinaryOperator() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         when (character) {
             '|' -> tokens.add(Token.BinaryOr(line, startColumn))
             '&' -> tokens.add(Token.BinaryAnd(line, startColumn))
@@ -352,7 +360,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeBrace() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         when (character) {
             '{' -> tokens.add(Token.LBrace(line, startColumn))
             '}' -> tokens.add(Token.RBrace(line, startColumn))
@@ -363,7 +371,7 @@ fun tokenize(program: String): List<Token> {
     }
     fun consumeParen() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         when (character) {
             '(' -> tokens.add(Token.LParen(line, startColumn))
             ')' -> tokens.add(Token.RParen(line, startColumn))
@@ -375,7 +383,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeAt() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         tokens.add(Token.At(line, startColumn))
         nextCharacter()
 
@@ -383,7 +391,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeSemi() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         tokens.add(Token.Semicolon(line, startColumn))
 
         nextCharacter()
@@ -393,7 +401,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeDivide() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         when (character) {
             '/' -> tokens.add(Token.Divide(line, startColumn))
 
@@ -404,7 +412,7 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeMultiply() {
         val startColumn = column
-        var character = program[index]
+        var character = getCharacter()
         when (character) {
             '*' -> tokens.add(Token.Multiply(line, startColumn))
         }
@@ -415,10 +423,10 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeComparison() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         nextCharacter()
         if (canContinue()) {
-        val nextCharacter = program[index]
+        val nextCharacter = getCharacter()
 
         when (character) {
             '=' -> if (nextCharacter == '=') {
@@ -464,13 +472,13 @@ fun tokenize(program: String): List<Token> {
 
     fun consumeShift() {
         val startColumn = column
-        val character = program[index]
+        val character = getCharacter()
         nextCharacter()
-        val nextCharacter = program[index]
+        val nextCharacter = getCharacter()
 
         if (character == '>' && nextCharacter == '>') {
             nextCharacter()
-            if (program[index] == '=') {
+            if (getCharacter() == '=') {
                 nextCharacter()
                 tokens.add(Token.ShiftRightAssign(line, startColumn))
             } else {
@@ -478,7 +486,7 @@ fun tokenize(program: String): List<Token> {
             }
         } else if (character == '<' && nextCharacter == '<') {
             nextCharacter()
-            if (program[index] == '=') {
+            if (getCharacter() == '=') {
                 nextCharacter()
                 tokens.add(Token.ShiftLeftAssign(line, startColumn))
 
@@ -513,7 +521,7 @@ fun tokenize(program: String): List<Token> {
         nextCharacter()
         if (canContinue()) {
 
-            var character = program[index] // return label
+            var character = getCharacter() // return label
                 val identifierBuilder = StringBuilder()
                 while (!character.isWhitespace()) {
                     identifierBuilder.append(character)
@@ -521,7 +529,7 @@ fun tokenize(program: String): List<Token> {
                     if (index >= program.length) {
                         break
                     }
-                    character = program[index]
+                    character = getCharacter()
                 }
                 toReturn = identifierBuilder.toString()
 
@@ -536,7 +544,7 @@ fun tokenize(program: String): List<Token> {
     }
 
     while (canContinue()) {
-        val character = program[index]
+        val character = getCharacter()
         if (character == ':') { //Start directive
             val nextToken = peekNextWord()
             if (DIRECTIVES.contains(":$nextToken")) {
