@@ -381,6 +381,21 @@ fun tokenize(program: String): List<Token> {
 
     }
 
+    fun consumeTilde() {
+        val startColumn = column
+        tokens.add(Token.Tilde(line, startColumn))
+        nextCharacter()
+
+    }
+
+
+    fun consumeExclaimation() {
+        val startColumn = column
+        tokens.add(Token.Exclaimation(line, startColumn))
+        nextCharacter()
+
+    }
+
     fun consumeAt() {
         val startColumn = column
         var character = getCharacter()
@@ -595,6 +610,10 @@ fun tokenize(program: String): List<Token> {
             consumeSemi()
         } else if (character == '@') {
             consumeAt()
+        } else if (character == '~') {
+            consumeTilde()
+        } else if (character == '!') {
+            consumeExclaimation()
         } else if (character == '/') {
             consumeDivide()
         } else if (character == '{' || character == '}') {
