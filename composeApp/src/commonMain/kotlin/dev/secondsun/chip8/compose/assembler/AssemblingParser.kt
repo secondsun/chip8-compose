@@ -133,6 +133,8 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Semicolon -> TODO()
                 is Token.ShiftLeftAssign -> TODO()
                 is Token.ShiftRightAssign -> TODO()
+                is Token.Caret -> TODO()
+                is Token.Percent -> TODO()
             }
         }
     }

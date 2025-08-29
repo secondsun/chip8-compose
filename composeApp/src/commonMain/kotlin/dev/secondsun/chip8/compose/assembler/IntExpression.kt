@@ -1,20 +1,11 @@
 package dev.secondsun.chip8.compose.assembler
 
 import java.math.BigInteger
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.cos
-import kotlin.math.exp
-import kotlin.math.floor
-import kotlin.math.ln
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.sign
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.math.tan
+import kotlin.math.*
 
 data class IntExpression(val expression: List<Token>) {
+
+
     fun evaluate(): Int {
         if (expression.isEmpty()) {
             return 0
@@ -40,80 +31,33 @@ data class IntExpression(val expression: List<Token>) {
 
     private fun parseCalc(inExpression: MutableList<Token>) : Double {
         val first = inExpression[0]
-        if (first is Token.Identifier) {
-            return when (first.name) {
-                "strlen" -> {inExpression.removeFirst();(inExpression.removeFirst() as Token.StringToken).value.length.toDouble()}
-                "sin" -> {
-                    inExpression.removeFirst()
-                    sin(parseCalc(inExpression))
-                }
-                "cos" -> {
-                    inExpression.removeFirst()
-                    cos(parseCalc(inExpression))
-                }
-                "tan" -> {
-                    inExpression.removeFirst()
-                    tan(parseCalc(inExpression))
-                }
-                "exp" -> {
-                    inExpression.removeFirst()
-                    exp(parseCalc(inExpression))
-                }
-                "log" -> {
-                    inExpression.removeFirst()
-                    ln(parseCalc(inExpression))
-                }
-                "abs" -> {
-                    inExpression.removeFirst()
-                    abs(parseCalc(inExpression))
-                }
-                "sqrt" -> {
-                    inExpression.removeFirst()
-                    sqrt(parseCalc(inExpression))
-                }
-                "sign" -> {
-                    inExpression.removeFirst()
-                    sign(parseCalc(inExpression))
-                }
-                "ceil" -> {
-                    inExpression.removeFirst()
-                    ceil(parseCalc(inExpression))
-                }
-                "floor" -> {
-                    inExpression.removeFirst()
-                    floor(parseCalc(inExpression))
-                }
-                "pow" -> {
-                    inExpression.removeFirst()
-                    exp(parseCalc(inExpression))
-                }
-                "min" -> {
-                    inExpression.removeFirst()
-                    min(parseTerminal(inExpression), parseCalc(inExpression))
-                }
-                "max" -> {
-                    inExpression.removeFirst()
-                    max(parseTerminal(inExpression), parseCalc(inExpression))
-                }
-                else -> {TODO("Add identifier to parseCalc for ${first.name} line ${first.line} column ${first.column}")}
+        if (first is Token.Identifier && first.name.equals("strlen")) {
+            inExpression.removeFirst();
+            return (inExpression.removeFirst() as Token.StringToken).value.length.toDouble()
+        } else if (UnaryFunc.entries.any { it.match(first) }) {
+            inExpression.removeFirst()
+            val func = UnaryFunc.entries.first { it.match(first) }
+            if (func == UnaryFunc.AT) {
+                TODO("Implement AT")
+            }    else {
+                return func.apply(parseCalc(inExpression))
             }
-        } else if (first is Token.Minus) {
-            inExpression.removeFirst()
-            return -parseCalc(inExpression)
-        } else if (first is Token.Tilde) {
-            inExpression.removeFirst()
-            return BigInteger.valueOf(parseCalc(inExpression).toLong()).not()
-                .toDouble()
-        } else if (first is Token.Exclaimation) {
-            inExpression.removeFirst()
-            return if (parseCalc(inExpression) == 0.0) {1.0} else {0.0}
-        } else if (first is Token.At) {
-            inExpression.removeFirst()
-            TODO("Handle @ ${first.line} ${first.column}")
+
         }
-        else {
-            return parseTerminal(inExpression)
+        val t = parseTerminal(inExpression)
+
+        if (inExpression.isEmpty()) {
+            return t
+        } else {
+            val next = inExpression[0]
+            if (BinaryFunc.entries.any { it.match(next) }) {
+                inExpression.removeFirst()
+                return BinaryFunc.entries.first { it.match(next) }.apply(t, parseCalc(inExpression))
+            } else {
+                return t
+            }
         }
+
     }
 
     private fun parseTerminal(inExpression: MutableList<Token>): Double {

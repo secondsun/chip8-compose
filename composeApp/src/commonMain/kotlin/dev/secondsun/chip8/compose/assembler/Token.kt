@@ -71,6 +71,16 @@ sealed interface Token {
             get() = TokenType.Exclaimation
     }
 
+    data class Caret(override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.Caret
+    }
+
+    data class Percent(override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.Percent
+    }
+
     data class Semicolon(override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.Semicolon
@@ -595,6 +605,8 @@ enum class TokenType {
     Plus,
     Minus,
     Tilde,
-    Exclaimation
+    Exclaimation,
+    Caret,
+    Percent
 
 }

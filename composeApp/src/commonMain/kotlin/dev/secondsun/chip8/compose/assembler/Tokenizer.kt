@@ -352,7 +352,7 @@ fun tokenize(program: String): List<Token> {
         when (character) {
             '|' -> tokens.add(Token.BinaryOr(line, startColumn))
             '&' -> tokens.add(Token.BinaryAnd(line, startColumn))
-
+            '^' -> tokens.add(Token.Caret(line, startColumn))
         }
         nextCharacter()
     }
@@ -392,6 +392,19 @@ fun tokenize(program: String): List<Token> {
     fun consumeExclaimation() {
         val startColumn = column
         tokens.add(Token.Exclaimation(line, startColumn))
+        nextCharacter()
+
+    }
+
+    fun consumeCaret() {
+        val startColumn = column
+        tokens.add(Token.Caret(line, startColumn))
+        nextCharacter()
+    }
+
+    fun consumePercent() {
+        val startColumn = column
+        tokens.add(Token.Percent(line, startColumn))
         nextCharacter()
 
     }
@@ -455,7 +468,8 @@ fun tokenize(program: String): List<Token> {
                 tokens.add(Token.NotEqual(line, startColumn))
                 nextCharacter()
             } else {
-                consumeErrorToken()
+                tokens.add(Token.Exclaimation(line, startColumn))
+
             }
 
             '>' -> if (nextCharacter == '=') {
@@ -616,6 +630,8 @@ fun tokenize(program: String): List<Token> {
             consumeExclaimation()
         } else if (character == '/') {
             consumeDivide()
+        } else if (character == '%') {
+            consumePercent()
         } else if (character == '{' || character == '}') {
             consumeBrace()
         } else {
