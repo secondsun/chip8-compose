@@ -55,7 +55,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.BigHex -> TODO()
                 is Token.Breakpoint -> defineBreakpoint()
                 is Token.Buzzer -> TODO()
-                is Token.Byte -> TODO()
+                is Token.Byte -> handleByte()
                 is Token.Calc -> handleCalc()
                 is Token.Call -> TODO()
                 is Token.Clear -> TODO()
@@ -94,7 +94,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Exclaimation -> TODO()
                 is Token.Pitch -> TODO()
                 is Token.Plane -> TODO()
-                is Token.Pointer -> TODO()
+                is Token.Pointer -> handlePointer()
                 is Token.Proto -> {
                     //Deprecated
                     tokenProvider.consume<Token.Proto>()
@@ -141,6 +141,67 @@ fun parse(program: List<Token>): ParserOutput {
     return context
 
 }
+
+private fun ParserContext.handlePointer() {
+    val pointer = tokenProvider.consume<Token.Pointer>()
+    val next = tokenProvider.peek()
+
+    when(val next =tokenProvider.peek()) {
+        is Token.LBrace -> {
+            val expression = consumeMacroBody()
+            parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(pointer) + expression))
+        }
+        is Token.Number -> {
+            tokenProvider.consume<Token.Number>()
+            if (next.value !in 0..0xFFFF) {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
+            } else {
+                val error = Token.Error("Wide value out of range", next.line, next.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            }
+        }
+        is Token.Identifier -> {
+            tokenProvider.consume<Token.Identifier>()
+            if (!defined(next.name)) {
+                val error = Token.Error("Constant not defined", next.line, next.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            } else {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
+            }
+        }
+        else -> {
+            tokenProvider.consume<Any>()
+            val error = Token.Error("Expected Number or Macro", next.line, next.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+        }
+    }
+}
+
+
+private fun ParserContext.handleByte() {
+    val byte = tokenProvider.consume<Token.Byte>()
+    when(val next =tokenProvider.peek()) {
+        is Token.LBrace -> {
+            val expression = consumeMacroBody()
+            parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(byte) + expression))
+        }
+        is Token.Number -> {
+            tokenProvider.consume<Token.Number>()
+            if (next.value !in -128..255) {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
+            } else {
+                val error = Token.Error("Byte value out of range", next.line, next.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
+            }
+        }
+        else -> {
+            val error = Token.Error("Expected Number or Macro", next.line, next.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
+        }
+        }
+    }
+
+
 
 private fun ParserContext.defineStringMode() {
     val stringMode = tokenProvider.consume<Token.StringMode>()

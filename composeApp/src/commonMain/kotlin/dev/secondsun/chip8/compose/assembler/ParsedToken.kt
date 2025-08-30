@@ -15,6 +15,8 @@ enum class ParsedTokenType {
     Org,
     Macro,
     StringMode,
-    Calc
+    Calc,
+    Byte,
+    Pointer
 
 }
