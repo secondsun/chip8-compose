@@ -47,7 +47,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Again -> TODO()
                 is Token.Alias -> defineAlias()
                 is Token.AndAssignment -> TODO()
-                is Token.Assert -> TODO()
+                is Token.Assert -> handleAssert()
                 is Token.Assignment -> TODO()
                 is Token.Audio -> TODO()
                 is Token.BCD -> TODO()
@@ -90,7 +90,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.NotEqual -> TODO()
                 is Token.Number -> consumeNumber()
                 is Token.OrAssignment -> TODO()
-                is Token.Org -> TODO()
+                is Token.Org -> handleOrg()
                 is Token.Exclaimation -> TODO()
                 is Token.Pitch -> TODO()
                 is Token.Plane -> TODO()
@@ -142,14 +142,59 @@ fun parse(program: List<Token>): ParserOutput {
 
 }
 
-private fun ParserContext.handlePointer() {
-    val pointer = tokenProvider.consume<Token.Pointer>()
-    val next = tokenProvider.peek()
+private fun ParserContext.handleAssert() {
+    val assert = tokenProvider.consume<Token.Assert>()
+    val message = tokenProvider.peek()
 
+    if (message is Token.StringToken) {
+        tokenProvider.consume<Token.StringToken>()
+    }
+
+    val expression = consumeMacroBody()
+
+TODO()
+
+}
+
+private fun ParserContext.handleOrg(){
+    val pointer = tokenProvider.consume<Token.Pointer>()
     when(val next =tokenProvider.peek()) {
         is Token.LBrace -> {
             val expression = consumeMacroBody()
-            parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(pointer) + expression))
+            parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer) + expression))
+        }
+        is Token.Number -> {
+            tokenProvider.consume<Token.Number>()
+            if (next.value !in 0..0xFFFF) {
+                parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
+            } else {
+                val error = Token.Error("Wide value out of range", next.line, next.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            }
+        }
+        is Token.Identifier -> {
+            if (defined(next.name)) {
+                tokenProvider.consume<Token.Identifier>()
+                parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
+            } else {
+                val error = Token.Error("Label ${next.name} not defined", next.line, next.column)
+                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            }
+        }
+        else -> {
+            tokenProvider.consume<Any>()
+            val error = Token.Error("Expected Number or Macro", next.line, next.column)
+            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+        }
+    }
+}
+
+private fun ParserContext.handlePointer() {
+    val pointer = tokenProvider.consume<Token.Pointer>()
+    when(val next =tokenProvider.peek()) {
+        is Token.LBrace -> {
+            val expression = consumeMacroBody()
+            parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer) + expression))
         }
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
@@ -161,13 +206,9 @@ private fun ParserContext.handlePointer() {
             }
         }
         is Token.Identifier -> {
+            //Pointer can have forward-references
             tokenProvider.consume<Token.Identifier>()
-            if (!defined(next.name)) {
-                val error = Token.Error("Constant not defined", next.line, next.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
-            } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
-            }
+            parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
         }
         else -> {
             tokenProvider.consume<Any>()

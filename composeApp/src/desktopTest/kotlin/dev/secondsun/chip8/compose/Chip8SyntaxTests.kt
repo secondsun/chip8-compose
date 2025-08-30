@@ -139,6 +139,7 @@ class Chip8SyntaxTests {
         assertEquals(47, pased.mutables["S"]?.evaluate())
     }
 
+
     @Test
     fun `string mode should allow additions to the alphabet`() {
 

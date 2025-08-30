@@ -16,4 +16,9 @@ class Chip8AssemblerTests {
         assertEquals(0x200, context.labels["main"])
     }
 
+    @Test
+    fun `can assert`() {
+        TODO()
+    }
+
 }
