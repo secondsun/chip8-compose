@@ -55,7 +55,8 @@ enum class ParsedTokenType {
     LoadFlads,
     I,
     Call,
-    Condition
+    Condition,
+    Assignment
 
 
 }

@@ -117,7 +117,7 @@ private fun ParserContext.parseOne(): ParsedToken {
 
         is Token.RBrace -> TODO()
         is Token.Random -> TODO()
-        is Token.Register -> TODO()
+        is Token.Register -> consumeAssign()
         is Token.Return -> {
             tokenProvider.consume<Token.Return>()
             return (ParsedToken(ParsedTokenType.Return, listOf(token)))
@@ -158,6 +158,40 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Percent -> TODO()
         else -> {
             throw IllegalStateException("Unexpected token $token")
+        }
+    }
+}
+
+private fun ParserContext.consumeAssign(): ParsedToken {
+    val register = tokenProvider.consume<Token.Register>()
+    val operator = tokenProvider.consume<Any>()
+    when (operator) {
+        is Token.Assignment,
+        is Token.XorAssignment,
+        is Token.OrAssignment,
+        is Token.AndAssignment,
+        is Token.AdditionAssignment,
+        is Token.ShiftLeftAssign,
+        is Token.ShiftRightAssign,
+        is Token.SubtractionAssignment -> {
+            val parameter = tokenProvider.consume<Any>()
+            if (parameter is Token.Identifier) {
+                if (!defined(parameter.name)) {
+                    val errorToken = Token.Error("Label ${parameter.name} not defined", parameter.line, parameter.column)
+                    return (ParsedToken(ParsedTokenType.Error, listOf(register, operator, parameter, errorToken)))
+                } else {
+                    return ParsedToken(ParsedTokenType.Assignment, listOf(register, operator, parameter))
+                }
+            } else if (parameter is Token.Random || parameter is Token.Number || parameter is Token.Key || parameter is Token.Delay ){
+                return ParsedToken(ParsedTokenType.Assignment, listOf(register, operator, parameter))
+            } else {
+                val errorToken = Token.Error("Expected Register, Identifier, Number or Key", parameter.line, parameter.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(register, operator, parameter, errorToken)))
+            }
+        }
+        else -> {
+            val errorToken = Token.Error("Expected Assignment", operator.line, operator.column)
+            return (ParsedToken(ParsedTokenType.Error, listOf(register, operator, errorToken)))
         }
     }
 }
@@ -214,7 +248,7 @@ private fun ParserContext.consumeCondition(): ParsedToken {
              is Token.LessThan,
              is Token.LessThanOrEqual -> {
                val nextToken = tokenProvider.consume<Any>()
-                if ( nextToken is Token.Register || nextToken is Token.Identifier ) {
+                if ( nextToken is Token.Register || nextToken is Token.Identifier || nextToken is Token.Number) {
                     return ParsedToken(ParsedTokenType.Condition, listOf(token, check, nextToken))
                 } else {
                     val nextTokenError = Token.Error("Expected Register or Identifier", nextToken.line, nextToken.column)
