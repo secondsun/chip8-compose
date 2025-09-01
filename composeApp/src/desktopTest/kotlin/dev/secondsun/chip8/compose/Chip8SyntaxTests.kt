@@ -168,13 +168,75 @@ class Chip8SyntaxTests {
 
     }
 
-    @Test
-    fun `parse if-begin-else statements`() {
+    fun `parse i assign`() {
+        val program = """
+            i := long 42
+        """.trimIndent()
         TODO()
     }
 
     @Test
+    fun `parse call from label and return`() {
+        val program = """
+            : shuffle-base  v0 := 0 ; # SMC
+            : main
+              shuffle-base
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(5, parsed.parsedTokens.size)
+        val label = parsed.parsedTokens[0]
+        val call = parsed.parsedTokens[4]
+        assertEquals(ParsedTokenType.Label, label.type)
+        assertEquals(ParsedTokenType.Call, call.type)
+        assertEquals("shuffle-base", (call.tokens[0] as Token.Identifier).name)
+    }
+
+    @Test
+    fun `parse if-begin statements`() {
+        val program = """
+        : shuffle-base v0 := 0 ;
+        if v3 != v4 begin
+			# swap a[v4] / a[v3]...
+			shuffle-base
+			i += v3
+			load v1 - v1 # has a[v3]
+			shuffle-base
+			i += v4
+			load v2 - v2 # has a[v4]
+			save v1 - v1
+			shuffle-base
+			i += v3
+			save v2 - v2
+		end
+        """.trimIndent()
+
+        val parsed = parse(program)
+        assertEquals(4, parsed.parsedTokens.size)
+
+        val conditional = parsed.parsedTokens[3] as ParsedConditionalToken
+        val body = conditional.body
+        assertEquals(10, body.size)
+
+
+    }
+
+    @Test
     fun `parse nested if statements`() {
+        val program = """
+            if v0 == 0 begin
+				if v1 key begin
+					v0 := 1
+					i := 42
+					sprite v2 v3 7
+				end
+			else
+				if v1 -key begin
+					v0 := 0
+					i := 42
+					sprite v2 v3 7
+				end
+			end
+        """.trimIndent()
         TODO()
     }
 

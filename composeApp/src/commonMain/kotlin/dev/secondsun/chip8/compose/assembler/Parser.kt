@@ -88,7 +88,14 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Hex -> TODO()
         is Token.Hires -> TODO()
         is Token.I -> TODO()
-        is Token.Identifier -> TODO()
+        is Token.Identifier -> {
+            val name = token.name
+            if (macros.containsKey(name)) {
+                consumeMacroExpand()
+            } else {
+                consumeCall()
+            }
+        }
         is Token.If -> consumeIf()
         is Token.Jump -> TODO()
         is Token.Jump0 -> TODO()
@@ -162,6 +169,42 @@ private fun ParserContext.parseOne(): ParsedToken {
     }
 }
 
+private fun ParserContext.consumeCall(): ParsedToken {
+    when (val call = tokenProvider.consume<Any>()) {
+        is Token.Call -> {
+            val next = tokenProvider.peek()
+            if (next is Token.Identifier) {
+                tokenProvider.consume<Token.Identifier>()
+                if (labels.containsKey(next.name)) {
+                    return (ParsedToken(ParsedTokenType.Call, listOf(call, next)))
+                } else {
+                    val errorToken = Token.Error("Label ${next.name} not defined", next.line, next.column)
+                    return (ParsedToken(ParsedTokenType.Error, listOf(call, errorToken)))
+                }
+            } else {
+                val errorToken = Token.Error("Expected label", next.line, next.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(call, errorToken)))
+            }
+        }
+        is Token.Identifier -> {
+            if (labels.containsKey(call.name)) {
+                return (ParsedToken(ParsedTokenType.Call, listOf(call, call)))
+            } else {
+                val errorToken = Token.Error("Label ${call.name} not defined", call.line, call.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(call, errorToken)))
+            }
+        }
+        else -> {
+            val errorToken = Token.Error("Expected Call or Label", call.line, call.column)
+            return (ParsedToken(ParsedTokenType.Error, listOf(call, errorToken)))
+        }
+    }
+}
+
+private fun ParserContext.consumeMacroExpand(): ParsedToken{
+    TODO()
+}
+
 private fun ParserContext.consumeAssign(): ParsedToken {
     val register = tokenProvider.consume<Token.Register>()
     val operator = tokenProvider.consume<Any>()
@@ -182,7 +225,7 @@ private fun ParserContext.consumeAssign(): ParsedToken {
                 } else {
                     return ParsedToken(ParsedTokenType.Assignment, listOf(register, operator, parameter))
                 }
-            } else if (parameter is Token.Random || parameter is Token.Number || parameter is Token.Key || parameter is Token.Delay ){
+            } else if (parameter is Token.Register || parameter is Token.Random || parameter is Token.Number || parameter is Token.Key || parameter is Token.Delay ){
                 return ParsedToken(ParsedTokenType.Assignment, listOf(register, operator, parameter))
             } else {
                 val errorToken = Token.Error("Expected Register, Identifier, Number or Key", parameter.line, parameter.column)
@@ -210,26 +253,50 @@ private fun ParserContext.consumeIf() : ParsedToken {
 
     }
 
+    val next = tokenProvider.peek()
+    if (next is Token.Then) {
+        val then = tokenProvider.consume<Token.Then>()
+        tokens.add(then)
 
-    val then = tokenProvider.consume<Token.Then>()
-    tokens.add(then)
+        if(then is Token.Error) {
+            val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then)  })
+            return (errorToken)
 
-    if(then is Token.Error) {
-        val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then)  })
-        return (errorToken)
+        }
 
+        val expression: ParsedToken = parseOne()
+        tokens.addAll(expression.tokens)
+
+        if(expression.type == ParsedTokenType.Error) {
+            val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then);addAll(expression.tokens)  })
+            return (errorToken)
+
+        }
+
+        return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = listOf(expression)))
+
+    } else if (next is Token.Begin) {
+        val begin = tokenProvider.consume<Token.Begin>()
+        tokens.add(begin)
+
+        val body = mutableListOf<ParsedToken>()
+        while (tokenProvider.peek() !is Token.End && tokenProvider.hasMore()) {
+            body.add(parseOne())
+        }
+        tokens.addAll(body.flatMap { it.tokens })
+
+        val end = tokenProvider.consume<Token.End>()
+        tokens.add(end)
+        if (end is Token.Error) {
+            val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(begin); addAll(body.flatMap { it.tokens });add(end)  })
+            return (errorToken)
+        } else {
+          return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = body))
+        }
+    } else {
+        val errorToken = Token.Error("Expected Then or Begin", next.line, next.column)
+        return (ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(errorToken)  }))
     }
-
-    val expression: ParsedToken = parseOne()
-    tokens.addAll(expression.tokens)
-
-    if(expression.type == ParsedTokenType.Error) {
-        val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then);addAll(expression.tokens)  })
-        return (errorToken)
-
-    }
-
-    return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = listOf(expression)))
 
 }
 
