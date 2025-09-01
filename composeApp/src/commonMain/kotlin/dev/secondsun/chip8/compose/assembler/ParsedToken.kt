@@ -1,6 +1,8 @@
 package dev.secondsun.chip8.compose.assembler
 
-data class ParsedToken(val type : ParsedTokenType,val tokens: List<Token>)
+open class ParsedToken(val type : ParsedTokenType, val tokens: List<Token>)
+
+class ParsedConditionalToken(type : ParsedTokenType, tokens: List<Token>, val condition: List<ParsedToken>, val body: List<ParsedToken>, val otherwise: List<ParsedToken>? = null) : ParsedToken(type, tokens)
 
 enum class ParsedTokenType {
     Error,
@@ -52,7 +54,8 @@ enum class ParsedTokenType {
     SaveFlags,
     LoadFlads,
     I,
-    Call
+    Call,
+    Condition
 
 
 }

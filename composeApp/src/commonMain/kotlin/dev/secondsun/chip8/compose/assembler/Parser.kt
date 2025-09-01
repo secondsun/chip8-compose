@@ -75,7 +75,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Hires -> TODO()
                 is Token.I -> TODO()
                 is Token.Identifier -> TODO()
-                is Token.If -> TODO()
+                is Token.If -> consumeIf()
                 is Token.Jump -> TODO()
                 is Token.Jump0 -> TODO()
                 is Token.Key -> TODO()
@@ -151,6 +151,78 @@ fun parse(program: List<Token>): ParserOutput {
     return context
 
 }
+
+private fun ParserContext.consumeIf() {
+    val tokens = mutableListOf<Token>()
+    val ifToken = tokenProvider.consume<Token.If>()
+    tokens.add(ifToken)
+
+    val condition: ParsedToken = consumeCondition()
+    tokens.addAll(condition.tokens)
+
+    if(condition.type == ParsedTokenType.Error) {
+        val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens)  })
+        parsedTokens.add(errorToken)
+        return
+    }
+
+
+    val then = tokenProvider.consume<Token.Then>()
+    tokens.add(then)
+
+    if(then is Token.Error) {
+        val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then)  })
+        parsedTokens.add(errorToken)
+        return
+    }
+
+    val expression: ParsedToken = consumeThenConditionBody()
+    tokens.addAll(expression.tokens)
+
+    if(expression.type == ParsedTokenType.Error) {
+        val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then);addAll(expression.tokens)  })
+        parsedTokens.add(errorToken)
+        return
+    }
+
+    parsedTokens.add(ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = listOf(expression)))
+
+}
+
+private fun ParserContext.consumeCondition(): ParsedToken {
+    val token = tokenProvider.consume<Token.Register>()
+
+    if ( token is Token.Register || token is Token.Identifier ) {
+       val check = tokenProvider.consume<Any>()
+       when(check) {
+           is Token.Key, is Token.MinusKey -> {
+               return ParsedToken(ParsedTokenType.Condition, listOf(token, check))
+           } is Token.Equal,
+             is Token.NotEqual,
+             is Token.GreaterThan,
+             is Token.GreaterThanOrEqual,
+             is Token.LessThan,
+             is Token.LessThanOrEqual -> {
+               val nextToken = tokenProvider.consume<Any>()
+                if ( nextToken is Token.Register || nextToken is Token.Identifier ) {
+                    return ParsedToken(ParsedTokenType.Condition, listOf(token, check, nextToken))
+                } else {
+                    val nextTokenError = Token.Error("Expected Register or Identifier", nextToken.line, nextToken.column)
+                    return ParsedToken(ParsedTokenType.Error, listOf(token, check, nextTokenError))
+                }
+           }
+          else -> {
+              val checkError = Token.Error("Invalid condition check ${check.javaClass.simpleName}", token.line, token.column)
+              return ParsedToken(ParsedTokenType.Error, listOf(token, checkError))
+          }
+       }
+    } else {
+        return ParsedToken(ParsedTokenType.Error, listOf(token))
+    }
+
+
+}
+
 
 private fun ParserContext.definePitch()
 {
@@ -809,7 +881,7 @@ private fun ParserContext.calculateAlias(): Pair<List<Token>, IntExpression> {
 }
 
 private fun ParserContext.calculateConstant(): Pair<List<Token>, IntExpression> {
-    return when (val next = tokenProvider.peek()) {
+    when (val next = tokenProvider.peek()) {
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
             return Pair(listOf(next), IntExpression(listOf(next)))

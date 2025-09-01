@@ -1,6 +1,7 @@
 package dev.secondsun.chip8.compose
 
 
+import dev.secondsun.chip8.compose.assembler.ParsedConditionalToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.parse
@@ -139,6 +140,43 @@ class Chip8SyntaxTests {
         assertEquals(47, pased.mutables["S"]?.evaluate())
     }
 
+    @Test
+    fun `parse if-then statements`() {
+        val program = """
+            		if v0 == 64 then v1 += 1
+        """.trimIndent()
+
+        val parsed = parse(program)
+
+        assertEquals(1, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.If, parsed.parsedTokens[0].type)
+        val ifToken = parsed.parsedTokens[0] as ParsedConditionalToken
+        val conditionalTokens = ifToken.condition
+        val bodyTokens = ifToken.body
+
+        assertEquals(3, conditionalTokens.size)
+        assertEquals(3, bodyTokens.size)
+
+        assertTrue(conditionalTokens[0].tokens[0] is Token.Register)
+        assertTrue(conditionalTokens[0].tokens[1] is Token.Equal)
+        assertTrue(conditionalTokens[0].tokens[2] is Token.Number)
+
+        assertTrue(bodyTokens[0].tokens[0] is Token.Register)
+        assertTrue(bodyTokens[0].tokens[1] is Token.Equal)
+        assertTrue(bodyTokens[0].tokens[2] is Token.Number)
+
+
+    }
+
+    @Test
+    fun `parse if-begin-else statements`() {
+        TODO()
+    }
+
+    @Test
+    fun `parse nested if statements`() {
+        TODO()
+    }
 
     @Test
     fun `string mode should allow additions to the alphabet`() {
