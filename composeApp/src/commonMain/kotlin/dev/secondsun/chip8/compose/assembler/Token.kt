@@ -122,6 +122,11 @@ sealed interface Token {
             get() = TokenType.Key
     }
 
+    data class MinusKey(override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.MinusKey
+    }
+
     data class Hex(override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.Hex
@@ -580,6 +585,7 @@ enum class TokenType {
     Macro,
     Calc,
     Byte,
+    MinusKey,
     StringMode,
     Assert,
     Moniter,

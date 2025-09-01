@@ -111,6 +111,27 @@ fun tokenize(program: String): List<Token> {
 
     }
 
+    fun consumeMinusKey() {
+        val startColumn = column
+        val buffer = StringBuffer()
+
+        while(canContinue() && !getCharacter().isWhitespace()) {
+            val character = getCharacter()
+            nextCharacter()
+            buffer.append(character)
+
+        }
+
+        val string = buffer.toString()
+        if (string == "-key") {
+            tokens.add(Token.MinusKey(line, startColumn))
+        } else {
+            tokens.add(Token.Error("Unexpected token $string at $line, $startColumn", line, startColumn))
+        }
+
+    }
+
+
     fun consumePlusMinus() {
         val startColumn = column
         val character = getCharacter()
@@ -589,7 +610,9 @@ fun tokenize(program: String): List<Token> {
             consumeIdentifierOrDirectiveOrRegister()
         } else if (character == '-' || character == '+') {
             val next = peekNextWord()
-            if (next.matches(Regex("[0-9][bx0-9a-fA-F]+"))) {
+            if (next == "key") {
+                consumeMinusKey()
+            } else if (next.matches(Regex("[0-9][bx0-9a-fA-F]+"))) {
                 consumeNumber()
             } else if (next.startsWith("=")) {
                 consumeAddSubAssignment()

@@ -79,6 +79,7 @@ fun parse(program: List<Token>): ParserOutput {
                 is Token.Jump -> TODO()
                 is Token.Jump0 -> TODO()
                 is Token.Key -> TODO()
+                is Token.MinusKey -> TODO()
                 is Token.LBrace -> TODO()
                 is Token.LessThan -> TODO()
                 is Token.LessThanOrEqual -> TODO()

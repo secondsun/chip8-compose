@@ -264,6 +264,20 @@ class Chip8TokenizerTest {
 
     }
 
+    @Test
+    fun `test minus key`() {
+        val program = """
+            -key
+            key
+            if v0 -key then va -= v2
+        """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(9, tokens.size)
+        assertTrue { tokens[0] is Token.MinusKey }
+        assertTrue { tokens[1] is Token.Key }
+        assertTrue { tokens[4] is Token.MinusKey }
+    }
+
     /**
      * Assignments are :=. -=. +=. |=, &=, ^=, <<=, >>=.
      */
