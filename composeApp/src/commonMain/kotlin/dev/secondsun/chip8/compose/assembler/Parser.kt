@@ -42,109 +42,11 @@ fun parse(program: List<Token>): ParserOutput {
     with(context) {
         while (tokenProvider.hasMore()) {
             val token = tokenProvider.peek()
-            when (token) {
-                is Token.AdditionAssignment -> TODO()
-                is Token.Again -> TODO()
-                is Token.Alias -> defineAlias()
-                is Token.AndAssignment -> TODO()
-                is Token.Assert -> handleAssert()
-                is Token.Assignment -> TODO()
-                is Token.Audio -> TODO()
-                is Token.BCD -> handleBCD()
-                is Token.Begin -> TODO()
-                is Token.BigHex -> TODO()
-                is Token.Breakpoint -> defineBreakpoint()
-                is Token.Buzzer -> defineBuzzer()
-                is Token.Byte -> handleByte()
-                is Token.Calc -> handleCalc()
-                is Token.Call -> TODO()
-                is Token.Clear -> {
-                    tokenProvider.consume<Token.Clear>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Clear, listOf(token)))
-                }
-                is Token.Colon -> defineLabel()
-                is Token.Const -> defineConstant()
-                is Token.Delay -> defineDelay()
-                is Token.Else -> TODO()
-                is Token.End -> TODO()
-                is Token.Equal -> TODO()
-                is Token.Error -> TODO()
-                is Token.GreaterThan -> TODO()
-                is Token.GreaterThanOrEqual -> TODO()
-                is Token.Hex -> TODO()
-                is Token.Hires -> TODO()
-                is Token.I -> TODO()
-                is Token.Identifier -> TODO()
-                is Token.If -> consumeIf()
-                is Token.Jump -> TODO()
-                is Token.Jump0 -> TODO()
-                is Token.Key -> TODO()
-                is Token.MinusKey -> TODO()
-                is Token.LBrace -> TODO()
-                is Token.LessThan -> TODO()
-                is Token.LessThanOrEqual -> TODO()
-                is Token.Load -> handleLoad()
-                is Token.LoadFlags -> TODO()
-                is Token.Loop -> TODO()
-                is Token.Lores -> TODO()
-                is Token.Macro -> defineMacro()
-                is Token.Moniter -> defineMonitor()
-                is Token.Native -> TODO()
-                is Token.Next -> defineNext()
-                is Token.NotEqual -> TODO()
-                is Token.Number -> consumeNumber()
-                is Token.OrAssignment -> TODO()
-                is Token.Org -> handleOrg()
-                is Token.Exclaimation -> TODO()
-                is Token.Pitch -> definePitch()
-                is Token.Plane -> TODO()
-                is Token.Pointer -> handlePointer()
-                is Token.Proto -> {
-                    //Deprecated
-                    tokenProvider.consume<Token.Proto>()
-                }
-
-                is Token.RBrace -> TODO()
-                is Token.Random -> TODO()
-                is Token.Register -> TODO()
-                is Token.Return -> {
-                    tokenProvider.consume<Token.Return>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Return, listOf(token)))
-                }
-                is Token.Save -> handleSave()
-                is Token.SaveFlags -> TODO()
-                is Token.ScrollDown -> TODO()
-                is Token.ScrollLeft -> TODO()
-                is Token.ScrollRight -> TODO()
-                is Token.ScrollUp -> TODO()
-                is Token.ShiftLeft -> TODO()
-                is Token.ShiftRight -> TODO()
-                is Token.Sprite -> TODO()
-                is Token.StringMode -> defineStringMode()
-                is Token.SubtractionAssignment -> TODO()
-                is Token.Then -> TODO()
-                is Token.Unpack -> consumeUnpack()
-                is Token.While -> TODO()
-                is Token.XorAssignment -> TODO()
-                is Token.Minus -> TODO()
-                is Token.Plus -> TODO()
-                is Token.StringToken -> TODO()
-                is Token.Divide -> TODO()
-                is Token.Multiply -> TODO()
-                is Token.BinaryAnd -> TODO()
-                is Token.BinaryOr -> TODO()
-                is Token.LParen -> TODO()
-                is Token.RParen -> TODO()
-                is Token.At -> TODO()
-                is Token.Tilde -> TODO()
-                is Token.Semicolon -> {
-                    tokenProvider.consume<Token.Semicolon>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Return, listOf(token)))
-                }
-                is Token.ShiftLeftAssign -> TODO()
-                is Token.ShiftRightAssign -> TODO()
-                is Token.Caret -> TODO()
-                is Token.Percent -> TODO()
+            if (token is Token.Proto) {
+                //Deprecated
+                tokenProvider.consume<Token.Proto>()
+            } else {
+                parsedTokens.add(parseOne())
             }
         }
     }
@@ -152,7 +54,115 @@ fun parse(program: List<Token>): ParserOutput {
 
 }
 
-private fun ParserContext.consumeIf() {
+private fun ParserContext.parseOne(): ParsedToken {
+    val token = tokenProvider.peek()
+    return when (token) {
+        is Token.AdditionAssignment -> TODO()
+        is Token.Again -> TODO()
+        is Token.Alias -> defineAlias()
+        is Token.AndAssignment -> TODO()
+        is Token.Assert -> handleAssert()
+        is Token.Assignment -> TODO()
+        is Token.Audio -> TODO()
+        is Token.BCD -> handleBCD()
+        is Token.Begin -> TODO()
+        is Token.BigHex -> TODO()
+        is Token.Breakpoint -> defineBreakpoint()
+        is Token.Buzzer -> defineBuzzer()
+        is Token.Byte -> handleByte()
+        is Token.Calc -> handleCalc()
+        is Token.Call -> TODO()
+        is Token.Clear -> {
+            tokenProvider.consume<Token.Clear>()
+            return (ParsedToken(ParsedTokenType.Clear, listOf(token)))
+        }
+        is Token.Colon -> defineLabel()
+        is Token.Const -> defineConstant()
+        is Token.Delay -> defineDelay()
+        is Token.Else -> TODO()
+        is Token.End -> TODO()
+        is Token.Equal -> TODO()
+        is Token.Error -> TODO()
+        is Token.GreaterThan -> TODO()
+        is Token.GreaterThanOrEqual -> TODO()
+        is Token.Hex -> TODO()
+        is Token.Hires -> TODO()
+        is Token.I -> TODO()
+        is Token.Identifier -> TODO()
+        is Token.If -> consumeIf()
+        is Token.Jump -> TODO()
+        is Token.Jump0 -> TODO()
+        is Token.Key -> TODO()
+        is Token.MinusKey -> TODO()
+        is Token.LBrace -> TODO()
+        is Token.LessThan -> TODO()
+        is Token.LessThanOrEqual -> TODO()
+        is Token.Load -> handleLoad()
+        is Token.LoadFlags -> TODO()
+        is Token.Loop -> TODO()
+        is Token.Lores -> TODO()
+        is Token.Macro -> defineMacro()
+        is Token.Moniter -> defineMonitor()
+        is Token.Native -> TODO()
+        is Token.Next -> defineNext()
+        is Token.NotEqual -> TODO()
+        is Token.Number -> consumeNumber()
+        is Token.OrAssignment -> TODO()
+        is Token.Org -> handleOrg()
+        is Token.Exclaimation -> TODO()
+        is Token.Pitch -> definePitch()
+        is Token.Plane -> TODO()
+        is Token.Pointer -> handlePointer()
+
+
+        is Token.RBrace -> TODO()
+        is Token.Random -> TODO()
+        is Token.Register -> TODO()
+        is Token.Return -> {
+            tokenProvider.consume<Token.Return>()
+            return (ParsedToken(ParsedTokenType.Return, listOf(token)))
+        }
+        is Token.Save -> handleSave()
+        is Token.SaveFlags -> TODO()
+        is Token.ScrollDown -> TODO()
+        is Token.ScrollLeft -> TODO()
+        is Token.ScrollRight -> TODO()
+        is Token.ScrollUp -> TODO()
+        is Token.ShiftLeft -> TODO()
+        is Token.ShiftRight -> TODO()
+        is Token.Sprite -> TODO()
+        is Token.StringMode -> defineStringMode()
+        is Token.SubtractionAssignment -> TODO()
+        is Token.Then -> TODO()
+        is Token.Unpack -> consumeUnpack()
+        is Token.While -> TODO()
+        is Token.XorAssignment -> TODO()
+        is Token.Minus -> TODO()
+        is Token.Plus -> TODO()
+        is Token.StringToken -> TODO()
+        is Token.Divide -> TODO()
+        is Token.Multiply -> TODO()
+        is Token.BinaryAnd -> TODO()
+        is Token.BinaryOr -> TODO()
+        is Token.LParen -> TODO()
+        is Token.RParen -> TODO()
+        is Token.At -> TODO()
+        is Token.Tilde -> TODO()
+        is Token.Semicolon -> {
+            tokenProvider.consume<Token.Semicolon>()
+            return (ParsedToken(ParsedTokenType.Return, listOf(token)))
+        }
+        is Token.ShiftLeftAssign -> TODO()
+        is Token.ShiftRightAssign -> TODO()
+        is Token.Caret -> TODO()
+        is Token.Percent -> TODO()
+        else -> {
+            throw IllegalStateException("Unexpected token $token")
+        }
+    }
+}
+
+private fun ParserContext.consumeIf() : ParsedToken {
     val tokens = mutableListOf<Token>()
     val ifToken = tokenProvider.consume<Token.If>()
     tokens.add(ifToken)
@@ -162,8 +172,8 @@ private fun ParserContext.consumeIf() {
 
     if(condition.type == ParsedTokenType.Error) {
         val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens)  })
-        parsedTokens.add(errorToken)
-        return
+        return (errorToken)
+
     }
 
 
@@ -172,20 +182,20 @@ private fun ParserContext.consumeIf() {
 
     if(then is Token.Error) {
         val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then)  })
-        parsedTokens.add(errorToken)
-        return
+        return (errorToken)
+
     }
 
-    val expression: ParsedToken = consumeThenConditionBody()
+    val expression: ParsedToken = parseOne()
     tokens.addAll(expression.tokens)
 
     if(expression.type == ParsedTokenType.Error) {
         val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(then);addAll(expression.tokens)  })
-        parsedTokens.add(errorToken)
-        return
+        return (errorToken)
+
     }
 
-    parsedTokens.add(ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = listOf(expression)))
+    return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = listOf(expression)))
 
 }
 
@@ -225,52 +235,52 @@ private fun ParserContext.consumeCondition(): ParsedToken {
 
 
 private fun ParserContext.definePitch()
-{
+: ParsedToken {
     val pitch = tokenProvider.consume<Token.Pitch>()
     val assign = tokenProvider.consume<Token.Assignment>()
 
     if (assign is Token.Error) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pitch, assign)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(pitch, assign)))
     } else {
         val register = tokenProvider.consume<Token>()
         if (register is Token.Register) {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Pitch, listOf(pitch, assign, register)))
+            return (ParsedToken(ParsedTokenType.Pitch, listOf(pitch, assign, register)))
         } else if (register is Token.Identifier) {
             if (!defined(register.name)) {
                 val errorToken = Token.Error("Label ${register.name} not defined", register.line, register.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pitch, assign, errorToken)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(pitch, assign, errorToken)))
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Pitch, listOf(pitch, assign, register)))
+                return (ParsedToken(ParsedTokenType.Pitch, listOf(pitch, assign, register)))
             }
         } else {
             val errorToken = Token.Error("Expected Register or Label", register.line, register.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pitch, assign, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(pitch, assign, errorToken)))
         }
     }
 
 }
 
 private fun ParserContext.defineBuzzer()
-{
+: ParsedToken {
     val buzzer = tokenProvider.consume<Token.Buzzer>()
     val assign = tokenProvider.consume<Token.Assignment>()
 
     if (assign is Token.Error) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign)))
     } else {
         val register = tokenProvider.consume<Token>()
         if (register is Token.Register) {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Buzzer, listOf(buzzer, assign, register)))
+            return (ParsedToken(ParsedTokenType.Buzzer, listOf(buzzer, assign, register)))
         } else if (register is Token.Identifier) {
             if (!defined(register.name)) {
                 val errorToken = Token.Error("Label ${register.name} not defined", register.line, register.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign, errorToken)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign, errorToken)))
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Buzzer, listOf(buzzer, assign, register)))
+                return (ParsedToken(ParsedTokenType.Buzzer, listOf(buzzer, assign, register)))
             }
         } else {
             val errorToken = Token.Error("Expected Register or Label", register.line, register.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(buzzer, assign, errorToken)))
         }
     }
 
@@ -278,33 +288,33 @@ private fun ParserContext.defineBuzzer()
 
 
 private fun ParserContext.defineDelay()
-    {
+    : ParsedToken {
         val delay = tokenProvider.consume<Token.Delay>()
         val assign = tokenProvider.consume<Token.Assignment>()
 
         if (assign is Token.Error) {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(delay, assign)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(delay, assign)))
         } else {
             val register = tokenProvider.consume<Token>()
             if (register is Token.Register) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Delay, listOf(delay, assign, register)))
+                return (ParsedToken(ParsedTokenType.Delay, listOf(delay, assign, register)))
             } else if (register is Token.Identifier) {
                 if (!defined(register.name)) {
                     val errorToken = Token.Error("Label ${register.name} not defined", register.line, register.column)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(delay, assign, errorToken)))
+                    return (ParsedToken(ParsedTokenType.Error, listOf(delay, assign, errorToken)))
                 } else {
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Delay, listOf(delay, assign, register)))
+                    return (ParsedToken(ParsedTokenType.Delay, listOf(delay, assign, register)))
                 }
             } else {
                 val errorToken = Token.Error("Expected Register or Label", register.line, register.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(delay, assign, errorToken)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(delay, assign, errorToken)))
             }
         }
 
     }
 
 
-private fun ParserContext.handleLoad() {
+private fun ParserContext.handleLoad() : ParsedToken {
     val load = tokenProvider.consume<Token.Load>()
     val reg = tokenProvider.peek()
     if (reg is Token.Register) {
@@ -316,27 +326,27 @@ private fun ParserContext.handleLoad() {
                 val reg2 = tokenProvider.peek()
                 if (reg2 is Token.Register) {
                     tokenProvider.consume<Token.Register>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Load, listOf(load, reg, reg2)))
+                    return (ParsedToken(ParsedTokenType.Load, listOf(load, reg, reg2)))
                 } else {
                     tokenProvider.consume<Any>()
                     val errorToken = Token.Error("Expected Register", reg2.line, reg2.column)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(load, reg, errorToken)))
+                    return (ParsedToken(ParsedTokenType.Error, listOf(load, reg, errorToken)))
                 }
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
+                return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
             }
         } else {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
+            return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
         }
     } else {
         tokenProvider.consume<Any>()
         val errorToken = Token.Error("Expected Register", reg.line, reg.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
     }
 
 }
 
-private fun ParserContext.handleSave() {
+private fun ParserContext.handleSave() : ParsedToken {
     val save = tokenProvider.consume<Token.Save>()
     val reg = tokenProvider.peek()
     if (reg is Token.Register) {
@@ -348,54 +358,54 @@ private fun ParserContext.handleSave() {
                 val reg2 = tokenProvider.peek()
                 if (reg2 is Token.Register) {
                     tokenProvider.consume<Token.Register>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Save, listOf(save, reg, reg2)))
+                    return (ParsedToken(ParsedTokenType.Save, listOf(save, reg, reg2)))
                 } else {
                     tokenProvider.consume<Any>()
                     val errorToken = Token.Error("Expected Register", reg2.line, reg2.column)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(save, reg, errorToken)))
+                    return (ParsedToken(ParsedTokenType.Error, listOf(save, reg, errorToken)))
                 }
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
+                return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
             }
         } else {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
+            return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
         }
     } else {
         tokenProvider.consume<Any>()
         val errorToken = Token.Error("Expected Register", reg.line, reg.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
     }
 
 }
 
-private fun ParserContext.handleBCD() {
+private fun ParserContext.handleBCD() : ParsedToken {
     val bcd = tokenProvider.consume<Token.BCD>()
     val next = tokenProvider.peek()
     if (next is Token.Register ) {
         tokenProvider.consume<Token.Register>()
-        parsedTokens.add(ParsedToken(ParsedTokenType.BCD, listOf(bcd, next)))
+        return (ParsedToken(ParsedTokenType.BCD, listOf(bcd, next)))
     } else if (next is Token.Identifier) {
         tokenProvider.consume<Token.Identifier>()
         if (defined(next.name)) {
-            parsedTokens.add(ParsedToken(ParsedTokenType.BCD, listOf(bcd, next)))
+            return (ParsedToken(ParsedTokenType.BCD, listOf(bcd, next)))
         } else {
             val errorToken = Token.Error("Label ${next.name} not defined", next.line, next.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(bcd, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(bcd, errorToken)))
         }
     } else {
         val errorToken = Token.Error("Expected Register or Label", next.line, next.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(bcd, errorToken)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(bcd, errorToken)))
     }
 }
 
-private fun ParserContext.handleAssert() {
+private fun ParserContext.handleAssert() : ParsedToken{
     val assert = tokenProvider.consume<Token.Assert>()
     val message = tokenProvider.peek()
 
     if (message is Token.Error) {
         tokenProvider.consume<Token.Error>()
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(assert) + message))
-        return
+        return (ParsedToken(ParsedTokenType.Error, listOf(assert) + message))
+        
     }
 
     if (message is Token.StringToken) {
@@ -406,17 +416,17 @@ private fun ParserContext.handleAssert() {
 
     if (expression.any { it is Token.Error }) {
         if (message is Token.StringToken) {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(assert) + message + expression))
+            return (ParsedToken(ParsedTokenType.Error, listOf(assert) + message + expression))
         } else {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(assert) + expression))
+            return (ParsedToken(ParsedTokenType.Error, listOf(assert) + expression))
         }
-        return
+        
     }
 
     if (message is Token.StringToken) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Assert, listOf(assert) + message + expression))
+        return (ParsedToken(ParsedTokenType.Assert, listOf(assert) + message + expression))
     } else {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Assert, listOf(assert) + expression))
+        return (ParsedToken(ParsedTokenType.Assert, listOf(assert) + expression))
     }
 
 
@@ -426,95 +436,95 @@ private fun ParserContext.handleAssert() {
 
 }
 
-private fun ParserContext.handleOrg(){
+private fun ParserContext.handleOrg(): ParsedToken{
     val pointer = tokenProvider.consume<Token.Pointer>()
     when(val next =tokenProvider.peek()) {
         is Token.LBrace -> {
             val expression = consumeMacroBody()
-            parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer) + expression))
+            return (ParsedToken(ParsedTokenType.Org, listOf(pointer) + expression))
         }
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
             if (next.value !in 0..0xFFFF) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
+                return (ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
             } else {
                 val error = Token.Error("Wide value out of range", next.line, next.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
             }
         }
         is Token.Identifier -> {
             if (defined(next.name)) {
                 tokenProvider.consume<Token.Identifier>()
-                parsedTokens.add(ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
+                return (ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
             } else {
                 val error = Token.Error("Label ${next.name} not defined", next.line, next.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
             }
         }
         else -> {
             tokenProvider.consume<Any>()
             val error = Token.Error("Expected Number or Macro", next.line, next.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
         }
     }
 }
 
-private fun ParserContext.handlePointer() {
+private fun ParserContext.handlePointer(): ParsedToken {
     val pointer = tokenProvider.consume<Token.Pointer>()
     when(val next =tokenProvider.peek()) {
         is Token.LBrace -> {
             val expression = consumeMacroBody()
-            parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer) + expression))
+            return (ParsedToken(ParsedTokenType.Pointer, listOf(pointer) + expression))
         }
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
             if (next.value !in 0..0xFFFF) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
+                return (ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
             } else {
                 val error = Token.Error("Wide value out of range", next.line, next.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
             }
         }
         is Token.Identifier -> {
             //Pointer can have forward-references
             tokenProvider.consume<Token.Identifier>()
-            parsedTokens.add(ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
+            return (ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
         }
         else -> {
             tokenProvider.consume<Any>()
             val error = Token.Error("Expected Number or Macro", next.line, next.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(pointer, error)))
         }
     }
 }
 
 
-private fun ParserContext.handleByte() {
+private fun ParserContext.handleByte(): ParsedToken {
     val byte = tokenProvider.consume<Token.Byte>()
     when(val next =tokenProvider.peek()) {
         is Token.LBrace -> {
             val expression = consumeMacroBody()
-            parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(byte) + expression))
+            return (ParsedToken(ParsedTokenType.Byte, listOf(byte) + expression))
         }
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
             if (next.value !in -128..255) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
+                return (ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
             } else {
                 val error = Token.Error("Byte value out of range", next.line, next.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
             }
         }
         else -> {
             val error = Token.Error("Expected Number or Macro", next.line, next.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
         }
         }
     }
 
 
 
-private fun ParserContext.defineStringMode() {
+private fun ParserContext.defineStringMode(): ParsedToken {
     val stringMode = tokenProvider.consume<Token.StringMode>()
     val stringModeName = tokenProvider.consume<Token.Identifier>()
 
@@ -529,38 +539,38 @@ private fun ParserContext.defineStringMode() {
 
                     val mode = stringModes.computeIfAbsent(stmName) { StringMode(stmName) }
                     mode.addAlphabet(stringModeAlphabet.value, stringModeBody)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.StringMode, buildList { add(stringMode); add(stringModeName);add(stringModeAlphabet); addAll(stringModeBody) }))
+                    return (ParsedToken(ParsedTokenType.StringMode, buildList { add(stringMode); add(stringModeName);add(stringModeAlphabet); addAll(stringModeBody) }))
                 } catch (e: Exception) {
                     val alphabetError = Token.Error("Invalid Alphabet : ${e.message}", stringModeAlphabet.line, stringModeAlphabet.column)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, buildList { add(stringMode); add(stringModeName);add(alphabetError); addAll(stringModeBody) }))
+                    return (ParsedToken(ParsedTokenType.Error, buildList { add(stringMode); add(stringModeName);add(alphabetError); addAll(stringModeBody) }))
                 }
 
 
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet) + stringModeBody))
+                return (ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet) + stringModeBody))
             }
         } else {
             if(stringModeAlphabet is Token.Error)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, stringModeAlphabet)))
             else {
                 val errorToken = Token.Error("Expected StringToken", stringModeAlphabet.line, stringModeAlphabet.column)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, errorToken)))
+                return (ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName, errorToken)))
             }
 
         }
 
     } else {
         if (stringModeName is Token.Error)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(stringMode, stringModeName)))
         else {
             val errorToken = Token.Error("Expected Identifier", stringModeName.line, stringModeName.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(stringMode, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(stringMode, errorToken)))
         }
     }
 
 }
 
-private fun ParserContext.defineMacro() {
+private fun ParserContext.defineMacro(): ParsedToken {
     val macro = tokenProvider.consume<Token.Macro>()
     val identifier = tokenProvider.consume<Token.Identifier>()
     if (identifier is Token.Identifier) {
@@ -574,7 +584,7 @@ private fun ParserContext.defineMacro() {
                     macroTokens.addAll(arguments)
                     macroTokens.addAll(body)
                     macros[identifier.name] = macroTokens
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Macro, buildList{add(macro); add(identifier); addAll(arguments); addAll(body)}))
+                    return (ParsedToken(ParsedTokenType.Macro, buildList{add(macro); add(identifier); addAll(arguments); addAll(body)}))
                 } else {
                     val errorWithArguments = buildList<Token> {
                         add(macro)
@@ -582,19 +592,19 @@ private fun ParserContext.defineMacro() {
                         addAll(arguments)
                         addAll(body)
                     }
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, errorWithArguments))
+                    return (ParsedToken(ParsedTokenType.Error, errorWithArguments))
                 }
             } else {
                 val errorWithArguments = mutableListOf<Token>(macro, identifier)
                 errorWithArguments.addAll(arguments)
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, errorWithArguments))
+                return (ParsedToken(ParsedTokenType.Error, errorWithArguments))
             }
         } else {
             val errorToken = Token.Error("${identifier.name} is already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(macro, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(macro, errorToken)))
         }
     } else {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(macro, identifier)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(macro, identifier)))
     }
 }
 
@@ -648,56 +658,56 @@ private fun ParserContext.consumeMacroDefArguments(): List<Token> {
     return toReturn
 }
 
-private fun ParserContext.defineMonitor() {
+private fun ParserContext.defineMonitor() : ParsedToken {
     val monitor = tokenProvider.consume<Token.Moniter>()
     val identifier = tokenProvider.consume<Token>()
 
     if (identifier is Token.Identifier) {
         if (defined(identifier.name)) {
             val errorToken = Token.Error("Monitor already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
-            return
+            return (ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
+
         }
     } else if (identifier !is Token.Register) {
         val errorToken = Token.Error("Expected Identifier or Register", identifier.line, identifier.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
-        return
+        return (ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
+
     }
 
     val value = tokenProvider.consume<Token>()
 
     if (value is Token.Number) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+        return (ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
     } else if (value is Token.StringToken) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+        return (ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
     } else {
         val errorToken = Token.Error("Expected String or Number", value.line, value.column)
 
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(monitor, identifier, errorToken)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(monitor, identifier, errorToken)))
     }
 
 }
 
-private fun ParserContext.defineBreakpoint() {
+private fun ParserContext.defineBreakpoint() : ParsedToken {
     val breakpoint = tokenProvider.consume<Token.Breakpoint>()
     val identifier = tokenProvider.consume<Token.Identifier>()
     if (identifier is Token.Identifier) {
         if (defined(identifier.name)) {
             val errorToken = Token.Error("Breakpoint already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(breakpoint, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(breakpoint, errorToken)))
         } else {
             val tokens = mutableListOf<Token>()
             tokens.add(breakpoint)
             tokens.add(identifier)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Breakpoint, listOf(breakpoint, identifier)))
+            return (ParsedToken(ParsedTokenType.Breakpoint, listOf(breakpoint, identifier)))
         }
     } else {
         val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(breakpoint, identifierError)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(breakpoint, identifierError)))
     }
 }
 
-private fun ParserContext.consumeUnpack() {
+private fun ParserContext.consumeUnpack() : ParsedToken {
     val unpack = tokenProvider.consume<Token.Unpack>()
     val next = tokenProvider.peek()
 
@@ -707,20 +717,20 @@ private fun ParserContext.consumeUnpack() {
                 //consume long
                 tokenProvider.consume<Token.Identifier>()
                 //handle number or label
-                parsedTokens.add(handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
+                return (handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
             }
 
             else -> {
                 //handle number or label
                 tokenProvider.consume<Token.Identifier>()
-                parsedTokens.add(handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
+                return (handleNumberOrLabel(listOf(unpack, next), ParsedTokenType.Unpack))
             }
         }
     } else if (next is Token.Number) {
-        parsedTokens.add(handleNumberOrLabel(listOf(unpack), ParsedTokenType.Unpack))
+        return (handleNumberOrLabel(listOf(unpack), ParsedTokenType.Unpack))
     } else {
         tokenProvider.consume<Any>()
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(unpack, next)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(unpack, next)))
     }
 
 }
@@ -763,29 +773,29 @@ private fun ParserContext.handleNumberOrLabel(tokens: List<Token>, parsedTokenTy
     }
 }
 
-private fun ParserContext.consumeNumber() {
+private fun ParserContext.consumeNumber() : ParsedToken{
     val number = tokenProvider.consume<Token.Number>()
     if (number is Token.Number) {
         val value = number.value
         if (value < -128 || value > 255) {
             val errorToken = Token.Error("Number out of range", number.line, number.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
         } else {
-            parsedTokens.add(ParsedToken(ParsedTokenType.Number, listOf(number)))
+            return (ParsedToken(ParsedTokenType.Number, listOf(number)))
         }
     } else {
         val errorToken = Token.Error("Expected number", number.line, number.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(errorToken)))
     }
 }
 
-private fun ParserContext.defineAlias() {
+private fun ParserContext.defineAlias() : ParsedToken {
     val aliasToken = tokenProvider.consume<Token.Alias>()
     val identifier = tokenProvider.consume<Token.Identifier>()
     if (identifier is Token.Identifier) {
         if (defined(identifier.name)) {
             val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(aliasToken, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(aliasToken, errorToken)))
         } else {
             val calulatedConstantResult: Pair<List<Token>, IntExpression> = calculateAlias()
             constants[identifier.name] = calulatedConstantResult.second
@@ -794,26 +804,26 @@ private fun ParserContext.defineAlias() {
             tokens.add(identifier)
             tokens.addAll(calulatedConstantResult.first)
             if (tokens.any { it is Token.Error }) {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Error, tokens))
+                return (ParsedToken(ParsedTokenType.Error, tokens))
             } else {
-                parsedTokens.add(ParsedToken(ParsedTokenType.Alias, tokens))
+                return (ParsedToken(ParsedTokenType.Alias, tokens))
             }
         }
     } else {
         val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(aliasToken, identifierError)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(aliasToken, identifierError)))
     }
 
 }
 
-private fun ParserContext.defineConstant() {
+private fun ParserContext.defineConstant() : ParsedToken{
     val constToken = tokenProvider.consume<Token.Const>()
     val identifier = tokenProvider.consume<Token.Identifier>()
 
     if (identifier is Token.Identifier) {
         if (defined(identifier.name)) {
             val errorToken = Token.Error("Constant already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(constToken, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(constToken, errorToken)))
         } else {
             val calculateConstantResult: Pair<List<Token>, IntExpression> = calculateConstant()
             constants[identifier.name] = calculateConstantResult.second
@@ -821,11 +831,11 @@ private fun ParserContext.defineConstant() {
             tokens.add(constToken)
             tokens.add(identifier)
             tokens.addAll(calculateConstantResult.first)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Constant, tokens))
+            return (ParsedToken(ParsedTokenType.Constant, tokens))
         }
     } else {
         val identifierError = Token.Error("Expected identifier", identifier.line, identifier.column)
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(constToken, identifierError)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(constToken, identifierError)))
     }
 
 }
@@ -912,26 +922,26 @@ private fun ParserContext.calculateConstant(): Pair<List<Token>, IntExpression> 
     }
 }
 
-private fun ParserContext.defineNext() {
+private fun ParserContext.defineNext() : ParsedToken{
     val next = tokenProvider.consume<Token.Next>()
     val identifier = tokenProvider.consume<Token.Identifier>()
 
     val tokens = listOf(next, identifier)
     if (tokens.any { it is Token.Error }) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, tokens))
+        return (ParsedToken(ParsedTokenType.Error, tokens))
     } else {
         val label = (identifier as Token.Identifier).name
         if (defined(label)) {
             val errorToken = Token.Error("Label already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(next, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(next, errorToken)))
         } else {
             labels[label] = IntExpression(listOf(identifier))
-            parsedTokens.add(ParsedToken(ParsedTokenType.Next, tokens))
+            return (ParsedToken(ParsedTokenType.Next, tokens))
         }
     }
 }
 
-private fun ParserContext.handleCalc() {
+private fun ParserContext.handleCalc() : ParsedToken {
     val calc = tokenProvider.consume<Token.Calc>()
     val next = tokenProvider.peek()
 
@@ -945,53 +955,53 @@ private fun ParserContext.handleCalc() {
                     val body = consumeMacroBody()
                     if (!body.any { it is Token.Error }) {
                         mutables[identifier.name] = IntExpression(body)
-                        parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier) + body))
+                        return (ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier) + body))
                     } else {
-                        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, identifier) + body))
+                        return (ParsedToken(ParsedTokenType.Error, listOf(calc, identifier) + body))
                     }
                  }
                 is Token.Number -> {
                     val number = tokenProvider.consume<Token.Number>()
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, number)))
+                    return (ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, number)))
                 }
                 is Token.Identifier -> {
                     val label = tokenProvider.consume<Token.Identifier>() as Token.Identifier
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, label)))
+                    return (ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, label)))
                 }
                 else -> {
                     tokenProvider.consume<Any>()
                     val errorToken = Token.Error("Expected number or expression", bodyStart.line, bodyStart.column)
-                    parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, identifier, errorToken)))
-                    return
+                    return (ParsedToken(ParsedTokenType.Error, listOf(calc, identifier, errorToken)))
+
                 }
             }
         } else {
             //identifier is already defined
             val errorToken = Token.Error("Identifier already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(calc, errorToken)))
         }
 
     } else {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(calc, next)))
+        return (ParsedToken(ParsedTokenType.Error, listOf(calc, next)))
     }
 
 }
 
-private fun ParserContext.defineLabel() {
+private fun ParserContext.defineLabel() : ParsedToken {
     val colon = tokenProvider.consume<Token.Colon>()
     val identifier = tokenProvider.consume<Token.Identifier>()
 
     val tokens = listOf(colon, identifier)
     if (tokens.any { it is Token.Error }) {
-        parsedTokens.add(ParsedToken(ParsedTokenType.Error, tokens))
+        return (ParsedToken(ParsedTokenType.Error, tokens))
     } else {
         val label = (identifier as Token.Identifier).name
         if (defined(label)) {
             val errorToken = Token.Error("Label already defined", identifier.line, identifier.column)
-            parsedTokens.add(ParsedToken(ParsedTokenType.Error, listOf(colon, errorToken)))
+            return (ParsedToken(ParsedTokenType.Error, listOf(colon, errorToken)))
         } else {
             labels[label] = IntExpression(listOf(identifier))
-            parsedTokens.add(ParsedToken(ParsedTokenType.Label, tokens))
+            return (ParsedToken(ParsedTokenType.Label, tokens))
         }
     }
 }
