@@ -27,6 +27,10 @@ class ParserContext(program: List<Token>) : ParserOutput {
     override val parsedTokens = mutableListOf<ParsedToken>()
     override val macros = mutableMapOf<String, List<Token>>()
     override val stringModes = mutableMapOf<String, StringMode>()
+    val branches = ArrayDeque<Triple<ParsedToken, Int, String>>()
+    val loops = ArrayDeque<Pair<ParsedToken, Int>>()
+    val whiles = ArrayDeque<ParsedToken>()
+
 
 }
 
@@ -361,7 +365,6 @@ private fun ParserContext.consumeIf(): ParsedToken {
     val tokens = mutableListOf<Token>()
     val ifToken = tokenProvider.consume<Token.If>()
     tokens.add(ifToken)
-
     val condition: ParsedToken = consumeCondition()
     tokens.addAll(condition.tokens)
 
