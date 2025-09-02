@@ -149,11 +149,11 @@ class Chip8SyntaxTests {
 
         val parsed = parse(program)
 
-        assertEquals(1, parsed.parsedTokens.size)
+        assertEquals(3, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.If, parsed.parsedTokens[0].type)
         val ifToken = parsed.parsedTokens[0] as ParsedConditionalToken
         val conditionalTokens = ifToken.condition[0].tokens
-        val bodyTokens = ifToken.body[0].tokens
+        val bodyTokens = parsed.parsedTokens[2].tokens
 
         assertEquals(3, conditionalTokens.size)
         assertEquals(3, bodyTokens.size)
@@ -212,11 +212,9 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(4, parsed.parsedTokens.size)
+        assertEquals(16, parsed.parsedTokens.size)
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error} }
 
-        val conditional = parsed.parsedTokens[3] as ParsedConditionalToken
-        val body = conditional.body
-        assertEquals(10, body.size)
 
 
     }
@@ -238,14 +236,9 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(1, parsed.parsedTokens.size)
+        assertEquals(14, parsed.parsedTokens.size)
         val conditional = parsed.parsedTokens[0] as ParsedConditionalToken
-        val body = conditional.body
-        val otherwise = conditional.otherwise!!
-        assertEquals(1, body.size)
-        assertTrue { body[0].type == ParsedTokenType.If }
-
-        assertTrue { otherwise[0].type == ParsedTokenType.If }
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error}}
 
     }
     @Test
@@ -260,16 +253,11 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(1, parsed.parsedTokens.size)
-        val conditional = parsed.parsedTokens[0] as ParsedConditionalToken
-        val body = conditional.body
-        val otherwise = conditional.otherwise
+        assertEquals(7, parsed.parsedTokens.size)
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error} }
+        assertTrue { parsed.parsedTokens[3].type == ParsedTokenType.Else }
+        assertTrue { parsed.parsedTokens[6].type == ParsedTokenType.End }
 
-        assertNotNull(otherwise)
-        assertEquals(2, otherwise.size)
-        assertEquals(otherwise.none {it.type == ParsedTokenType.Error}, true)
-
-        assertEquals(otherwise.flatMap {it.tokens}.none{it.type == TokenType.Error}, true)
 
     }
 
@@ -436,4 +424,35 @@ class Chip8SyntaxTests {
         assertEquals(ParsedTokenType.Error, tokens[4].type)
 
     }
+
+    @Test
+    fun `loop again test`() {
+        val program = """
+                loop
+                    sprite v0 v1 1
+                    i  += v3
+                    v2 += 1
+                    v0 += 8
+                    if v0 == 64 then v1 += 1
+                    if v0 == 64 then v0 := 0
+                    if v1 != 32 then
+                again
+        """.trimIndent()
+
+        val parsed = parse(program)
+        assertEquals(14, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Loop, parsed.parsedTokens[0].type)
+        assertTrue(parsed.parsedTokens.none{it.type == ParsedTokenType.Error})
+    }
+
+    @Test
+    fun `loop while again test`() {
+
+    }
+
+    @Test
+    fun `nested loop again test`() {
+
+    }
+
 }
