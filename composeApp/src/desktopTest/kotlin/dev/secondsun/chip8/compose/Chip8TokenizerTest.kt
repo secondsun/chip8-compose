@@ -161,6 +161,24 @@ class Chip8TokenizerTest {
      * Numbers can be written using 0x or 0b prefixes to indicate hexadecimal or binary encodings, respectively.
      */
     @Test
+    fun testMinusNumbers() {
+        val program = """
+            v2 += -42
+            - 42
+        """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(5, tokens.size)
+        assertTrue { tokens[2] is Token.Number }
+        assertEquals(-42, (tokens[2] as Token.Number).value)
+        assertTrue { tokens[3] is Token.Minus }
+        assertTrue { tokens[4] is Token.Number }
+        assertEquals(42, (tokens[4] as Token.Number).value)
+    }
+
+    /**
+     * Numbers can be written using 0x or 0b prefixes to indicate hexadecimal or binary encodings, respectively.
+     */
+    @Test
     fun testNumbers() {
         val program = """
             : main
@@ -233,11 +251,11 @@ class Chip8TokenizerTest {
 
         val vARegisterToken = tokens[11]
         assertTrue { vARegisterToken is Token.Register }
-        assertEquals(Registers.vA, (vARegisterToken as Token.Register).register)
+        assertEquals(Registers.va, (vARegisterToken as Token.Register).register)
 
         val vFRegisterToken = tokens[14]
         assertTrue { vFRegisterToken is Token.Register }
-        assertEquals(Registers.vF, (vFRegisterToken as Token.Register).register)
+        assertEquals(Registers.vf, (vFRegisterToken as Token.Register).register)
 
         val iRegisterToken = tokens[17]
         assertTrue { iRegisterToken is Token.Register }

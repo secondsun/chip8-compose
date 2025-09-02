@@ -1,6 +1,9 @@
 package dev.secondsun.chip8.compose.assembler
 
+import java.lang.Character.isWhitespace
 import java.lang.Integer.parseInt
+import java.util.Locale
+import kotlin.text.compareTo
 import kotlin.text.get
 
 
@@ -289,7 +292,7 @@ fun tokenize(program: String): List<Token> {
 
         val identifier = identifierBuilder.toString()
 
-        if (REGISTERS.contains(identifier)) {
+        if (REGISTERS.contains(identifier.lowercase())) {
             tokens.add(Token.makeRegister(identifier, line, startColumn))
         } else if (DIRECTIVES.contains(identifier)) {
             tokens.add(Token.makeDirective(identifier, line, startColumn))
@@ -557,6 +560,16 @@ fun tokenize(program: String): List<Token> {
 
     }
 
+
+    fun peekNextCharacter(): Char {
+        return if ((index+1) < program.length) {
+            program[index+1]
+        } else {
+            Char.MIN_VALUE
+        }
+    }
+
+
     /**
      * Return the next string of tokens until a whitespace is encountered.
      */
@@ -609,15 +622,18 @@ fun tokenize(program: String): List<Token> {
         } else if (character.isLetter()) { // consume identifier
             consumeIdentifierOrDirectiveOrRegister()
         } else if (character == '-' || character == '+') {
+            val nextCharacter = peekNextCharacter()
             val next = peekNextWord()
-            if (next == "key") {
+            if (isWhitespace(nextCharacter)) {
+                consumePlusMinus()
+            } else if (next == "key") {
                 consumeMinusKey()
             } else if (next.matches(Regex("[0-9][bx0-9a-fA-F]+"))) {
                 consumeNumber()
+            } else if (next.matches(Regex("[0-9]+"))) {
+                consumeNumber()
             } else if (next.startsWith("=")) {
                 consumeAddSubAssignment()
-            } else {
-                consumePlusMinus()
             }
         } else if (character == '|' || character == '&' || character == '^') {
             val next = peekNextWord()

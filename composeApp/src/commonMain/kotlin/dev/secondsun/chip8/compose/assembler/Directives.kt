@@ -10,12 +10,12 @@ val REGISTERS = setOf("v0",
     "v7",
     "v8",
     "v9",
-    "vA",
-    "vB",
-    "vC",
-    "vD",
-    "vE",
-    "vF",
+    "va",
+    "vb",
+    "vc",
+    "vd",
+    "ve",
+    "vf",
     "i"
 )
 

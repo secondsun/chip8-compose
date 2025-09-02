@@ -4,14 +4,12 @@ package dev.secondsun.chip8.compose
 import dev.secondsun.chip8.compose.assembler.ParsedConditionalToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.Token
-import dev.secondsun.chip8.compose.assembler.TokenType
 import dev.secondsun.chip8.compose.assembler.parse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.fail
 
 /**
  * Tests for the Chip-8 assembly syntax. This includes constant experssions, directive arguments,
@@ -91,7 +89,6 @@ class Chip8SyntaxTests {
     }
 
 
-
     @Test
     fun `basic test of string mode`() {
         val program = """
@@ -136,8 +133,8 @@ class Chip8SyntaxTests {
 
         val pased = parse(program)
         assertEquals(2, pased.parsedTokens.size)
-        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[0].type )
-        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[1].type )
+        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[0].type)
+        assertEquals(ParsedTokenType.Calc, pased.parsedTokens[1].type)
         assertEquals(47, pased.mutables["S"]?.evaluate())
     }
 
@@ -149,11 +146,11 @@ class Chip8SyntaxTests {
 
         val parsed = parse(program)
 
-        assertEquals(3, parsed.parsedTokens.size)
+        assertEquals(2, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.If, parsed.parsedTokens[0].type)
         val ifToken = parsed.parsedTokens[0] as ParsedConditionalToken
         val conditionalTokens = ifToken.condition[0].tokens
-        val bodyTokens = parsed.parsedTokens[2].tokens
+        val bodyTokens = parsed.parsedTokens[1].tokens
 
         assertEquals(3, conditionalTokens.size)
         assertEquals(3, bodyTokens.size)
@@ -170,7 +167,7 @@ class Chip8SyntaxTests {
     }
 
     fun `parse i assign`() {
-        val program = """
+        """
             i := long 42
         """.trimIndent()
         TODO()
@@ -212,9 +209,8 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(16, parsed.parsedTokens.size)
-        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error} }
-
+        assertEquals(15, parsed.parsedTokens.size)
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error } }
 
 
     }
@@ -236,11 +232,12 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(14, parsed.parsedTokens.size)
-        val conditional = parsed.parsedTokens[0] as ParsedConditionalToken
-        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error}}
+        assertEquals(11, parsed.parsedTokens.size)
+        parsed.parsedTokens[0] as ParsedConditionalToken
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error } }
 
     }
+
     @Test
     fun `parse if begin else statements`() {
         val program = """
@@ -253,17 +250,16 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(7, parsed.parsedTokens.size)
-        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error} }
-        assertTrue { parsed.parsedTokens[3].type == ParsedTokenType.Else }
-        assertTrue { parsed.parsedTokens[6].type == ParsedTokenType.End }
+        assertEquals(6, parsed.parsedTokens.size)
+        assertTrue { parsed.parsedTokens.none { it.type == ParsedTokenType.Error } }
+        assertTrue { parsed.parsedTokens[2].type == ParsedTokenType.Else }
+        assertTrue { parsed.parsedTokens[5].type == ParsedTokenType.End }
 
 
     }
 
     @Test
     fun `string mode should allow additions to the alphabet`() {
-
 
 
         val program = """
@@ -318,6 +314,7 @@ class Chip8SyntaxTests {
         assertTrue { parsed.macros["steps-show-digits"]!!.last() is Token.RBrace }
         assertFalse { parsed.macros["steps-show-digits"]!!.any { it is Token.Error } }
     }
+
     @Test
     fun testMacroWithCommentAndNestedRBrace() {
         val program = """
@@ -440,19 +437,61 @@ class Chip8SyntaxTests {
         """.trimIndent()
 
         val parsed = parse(program)
-        assertEquals(14, parsed.parsedTokens.size)
+        assertEquals(11, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.Loop, parsed.parsedTokens[0].type)
-        assertTrue(parsed.parsedTokens.none{it.type == ParsedTokenType.Error})
+        assertTrue(parsed.parsedTokens.none { it.type == ParsedTokenType.Error })
     }
 
     @Test
     fun `loop while again test`() {
+        val program = """
+            loop
+		    while v0 != 1
+                v0 += -1
+                vf := 76
+                i  += vf
+            again
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(6, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Loop, parsed.parsedTokens[0].type)
+        assertEquals(ParsedTokenType.While, parsed.parsedTokens[1].type)
+        assertEquals(ParsedTokenType.Again, parsed.parsedTokens[5].type)
+        assertTrue(parsed.parsedTokens.none { it.type == ParsedTokenType.Error })
 
     }
 
     @Test
     fun `nested loop again test`() {
+        val program = """
+            	loop
+            		i := 0x42
+            		i += v3
+            		i += v4
+            		load v0
+            		v5 := v0 # column
+            		v2 := 0  # y tile
+            		
 
+            		loop
+            			i := 0x444
+            			v0 := random 0b1100
+            			i += v0
+            			v5 >>= v5
+            			if vf != 0 then i := 0x42
+            			sprite v1 v2 4
+            			v2 += 4
+            			if v2 != 32 then
+            		again
+
+            		v1 += 4
+            		v4 += 1
+            		if v4 != 16 then
+            	again
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(23, parsed.parsedTokens.size)
+        assertTrue(parsed.parsedTokens.none { it.type == ParsedTokenType.Error })
     }
 
 }

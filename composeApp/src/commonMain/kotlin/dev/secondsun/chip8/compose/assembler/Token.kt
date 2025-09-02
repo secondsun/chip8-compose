@@ -514,7 +514,7 @@ sealed interface Token {
         }
 
         fun makeRegister(identifier: String, line: Int, startColumn: Int): Token {
-            return Register(Registers.valueOf(identifier), line, startColumn)
+            return Register(Registers.valueOf(identifier.lowercase()), line, startColumn)
         }
     }
 }

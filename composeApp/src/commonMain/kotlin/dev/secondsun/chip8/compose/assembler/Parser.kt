@@ -29,7 +29,7 @@ class ParserContext(program: List<Token>) : ParserOutput {
     override val stringModes = mutableMapOf<String, StringMode>()
     val branches = ArrayDeque<Triple<ParsedToken, Int, String>>()
     val loops = ArrayDeque<Pair<ParsedToken, Int>>()
-    val whiles = ArrayDeque<ParsedToken>()
+    val whiles = ArrayDeque<ParsedToken?>()
 
 
 }
@@ -62,8 +62,7 @@ private fun ParserContext.parseOne(): ParsedToken {
     return when (val token = tokenProvider.peek()) {
         is Token.AdditionAssignment -> TODO()
         is Token.Again -> {
-            tokenProvider.consume<Token.Again>()
-            return (ParsedToken(ParsedTokenType.Again, listOf(token)))
+            consumeAgain()
         }
 
         is Token.Alias -> defineAlias()
@@ -76,6 +75,7 @@ private fun ParserContext.parseOne(): ParsedToken {
             tokenProvider.consume<Token.Begin>()
             return (ParsedToken(ParsedTokenType.Begin, listOf(token)))
         }
+
         is Token.BigHex -> TODO()
         is Token.Breakpoint -> defineBreakpoint()
         is Token.Buzzer -> defineBuzzer()
@@ -91,13 +91,13 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Const -> defineConstant()
         is Token.Delay -> defineDelay()
         is Token.Else -> {
-            tokenProvider.consume<Token.Else>()
-            return (ParsedToken(ParsedTokenType.Else, listOf(token)))
+            handleElse()
         }
+
         is Token.End -> {
-            tokenProvider.consume<Token.End>()
-            return (ParsedToken(ParsedTokenType.End, listOf(token)))
+            handleEnd()
         }
+
         is Token.Equal -> TODO()
         is Token.Error -> {
             tokenProvider.consume<Token.Error>()
@@ -134,7 +134,10 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Moniter -> defineMonitor()
         is Token.Native -> consumeNative()
         is Token.Next -> defineNext()
-        is Token.NotEqual -> TODO()
+        is Token.NotEqual -> {
+            TODO()
+        }
+
         is Token.Number -> consumeNumber()
         is Token.OrAssignment -> TODO()
         is Token.Org -> handleOrg()
@@ -167,8 +170,9 @@ private fun ParserContext.parseOne(): ParsedToken {
             tokenProvider.consume<Token.Then>()
             return (ParsedToken(ParsedTokenType.Then, listOf(token)))
         }
+
         is Token.Unpack -> consumeUnpack()
-        is Token.While ->  consumeWhile()
+        is Token.While -> consumeWhile()
 
 
         is Token.XorAssignment -> TODO()
@@ -198,23 +202,79 @@ private fun ParserContext.parseOne(): ParsedToken {
     }
 }
 
+private fun ParserContext.consumeAgain(): ParsedToken {
+    val token = tokenProvider.consume<Token.Again>()
+    if (this.loops.isEmpty()) {
+        val error = Token.Error("Again without loop", token.line, token.column)
+        return (ParsedToken(ParsedTokenType.Error, listOf(error)))
+    }
+    this.loops.removeLast()
+
+    while (this.whiles.last() != null) {
+        this.whiles.removeLast()
+    }
+
+    this.whiles.removeLast()
+
+    return (ParsedToken(ParsedTokenType.Again, listOf(token)))
+}
+
+private fun ParserContext.handleEnd(): ParsedToken {
+    val token = tokenProvider.consume<Token.End>()
+    if (this.branches.isEmpty()) {
+        val error = Token.Error("End without if", token.line, token.column)
+        return (ParsedToken(ParsedTokenType.Error, listOf(error)))
+    }
+    this.branches.removeLast()
+
+    return (ParsedToken(ParsedTokenType.End, listOf(token)))
+}
+
+private fun ParserContext.handleElse(): ParsedToken {
+    val token = tokenProvider.consume<Token.Else>()
+
+    if (this.branches.isEmpty()) {
+        val error = Token.Error("Else without if", token.line, token.column)
+        return ParsedToken(ParsedTokenType.Error, listOf(error))
+    }
+
+    this.branches.removeLast()
+
+
+    val toReturn = (ParsedToken(ParsedTokenType.Else, listOf(token)))
+    this.branches.addLast(Triple(toReturn, parsedTokens.size, "else"))
+    return toReturn
+}
+
 private fun ParserContext.consumeWhile(): ParsedToken {
     val whileToken = tokenProvider.consume<Token.While>()
+    if (this.loops.isEmpty()) {
+        val error = Token.Error("While without if", whileToken.line, whileToken.column)
+        return ParsedToken(ParsedTokenType.Error, listOf(error))
+    }
     val condition = consumeCondition()
     if (condition.type == ParsedTokenType.Error) {
         return (ParsedToken(ParsedTokenType.Error, buildList { add(whileToken); addAll(condition.tokens) }))
     } else {
-        return ParsedConditionalToken(
+        val toReturn = ParsedConditionalToken(
             type = ParsedTokenType.While,
             tokens = listOf(whileToken),
             condition = listOf(condition)
         )
+
+        this.whiles.addLast(toReturn)
+
+        return toReturn
     }
 }
 
 private fun ParserContext.consumeLoop(): ParsedToken {
     val loop = tokenProvider.consume<Token.Loop>()
-    return ParsedToken(type = ParsedTokenType.Loop, tokens = listOf(loop))
+
+    val toReturn = ParsedToken(type = ParsedTokenType.Loop, tokens = listOf(loop))
+    this.loops.addLast(Pair(toReturn, parsedTokens.size))
+    this.whiles.addLast(null)
+    return toReturn
 }
 
 private fun ParserContext.consumeSprite(): ParsedToken {
@@ -374,7 +434,32 @@ private fun ParserContext.consumeIf(): ParsedToken {
 
     }
 
-    return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens, condition = listOf(condition)))
+    val toReturn = (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens, condition = listOf(condition)))
+    //handle begin or then
+    when (val beginOrThen = tokenProvider.consume<Token>()) {
+        is Token.Begin -> {
+            branches.addLast(Triple(toReturn, parsedTokens.size, "begin"))
+        }
+
+        is Token.Then -> {}
+        else -> {
+            return (ParsedConditionalToken(
+                type = ParsedTokenType.Error,
+                tokens = buildList {
+                    addAll(tokens); add(
+                    Token.Error(
+                        "Expected begin or Then",
+                        beginOrThen.line,
+                        beginOrThen.column
+                    )
+                )
+                },
+                condition = listOf(condition)
+            ))
+        }
+    }
+
+    return toReturn
 
 }
 
