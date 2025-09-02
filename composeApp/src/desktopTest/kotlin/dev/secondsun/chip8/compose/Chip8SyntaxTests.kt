@@ -228,17 +228,25 @@ class Chip8SyntaxTests {
 				if v1 key begin
 					v0 := 1
 					i := 42
-					sprite v2 v3 7
 				end
 			else
 				if v1 -key begin
 					v0 := 0
 					i := 42
-					sprite v2 v3 7
 				end
 			end
         """.trimIndent()
-        TODO()
+
+        val parsed = parse(program)
+        assertEquals(1, parsed.parsedTokens.size)
+        val conditional = parsed.parsedTokens[0] as ParsedConditionalToken
+        val body = conditional.body
+        val otherwise = conditional.otherwise!!
+        assertEquals(1, body.size)
+        assertTrue { body[0].type == ParsedTokenType.If }
+
+        assertTrue { otherwise[0].type == ParsedTokenType.If }
+
     }
     @Test
     fun `parse if begin else statements`() {
