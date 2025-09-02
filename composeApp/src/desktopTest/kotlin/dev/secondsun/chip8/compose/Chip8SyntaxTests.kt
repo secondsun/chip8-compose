@@ -4,6 +4,7 @@ package dev.secondsun.chip8.compose
 import dev.secondsun.chip8.compose.assembler.ParsedConditionalToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.Token
+import dev.secondsun.chip8.compose.assembler.TokenType
 import dev.secondsun.chip8.compose.assembler.parse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -238,6 +239,30 @@ class Chip8SyntaxTests {
 			end
         """.trimIndent()
         TODO()
+    }
+    @Test
+    fun `parse if begin else statements`() {
+        val program = """
+            if v0 == 0x2 begin
+                v1 += 2
+            else
+                v2 := 0x2
+                v3 := -32
+            end
+        """.trimIndent()
+
+        val parsed = parse(program)
+        assertEquals(1, parsed.parsedTokens.size)
+        val conditional = parsed.parsedTokens[0] as ParsedConditionalToken
+        val body = conditional.body
+        val otherwise = conditional.otherwise
+
+        assertNotNull(otherwise)
+        assertEquals(2, otherwise.size)
+        assertEquals(otherwise.none {it.type == ParsedTokenType.Error}, true)
+
+        assertEquals(otherwise.flatMap {it.tokens}.none{it.type == TokenType.Error}, true)
+
     }
 
     @Test

@@ -240,6 +240,7 @@ private fun ParserContext.consumeAssign(): ParsedToken {
 }
 
 private fun ParserContext.consumeIf() : ParsedToken {
+    var otherwise:List<ParsedToken>? = null
     val tokens = mutableListOf<Token>()
     val ifToken = tokenProvider.consume<Token.If>()
     tokens.add(ifToken)
@@ -280,10 +281,21 @@ private fun ParserContext.consumeIf() : ParsedToken {
         tokens.add(begin)
 
         val body = mutableListOf<ParsedToken>()
-        while (tokenProvider.peek() !is Token.End && tokenProvider.hasMore()) {
+        while ((tokenProvider.peek() !is Token.End && tokenProvider.peek() !is Token.Else) && tokenProvider.hasMore()) {
             body.add(parseOne())
         }
         tokens.addAll(body.flatMap { it.tokens })
+
+        if (tokenProvider.peek() is Token.Else) {
+            tokens.add(tokenProvider.consume<Token.Else>())
+
+            otherwise = mutableListOf<ParsedToken>()
+            while ((tokenProvider.peek() !is Token.End ) && tokenProvider.hasMore()) {
+                otherwise.add(parseOne())
+            }
+            tokens.addAll(otherwise.flatMap { it.tokens })
+
+        }
 
         val end = tokenProvider.consume<Token.End>()
         tokens.add(end)
@@ -291,7 +303,7 @@ private fun ParserContext.consumeIf() : ParsedToken {
             val errorToken = ParsedToken(ParsedTokenType.Error, buildList { add(ifToken); addAll(condition.tokens); add(begin); addAll(body.flatMap { it.tokens });add(end)  })
             return (errorToken)
         } else {
-          return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = body))
+          return (ParsedConditionalToken(type = ParsedTokenType.If, tokens = tokens,condition = listOf(condition), body = body,otherwise = otherwise))
         }
     } else {
         val errorToken = Token.Error("Expected Then or Begin", next.line, next.column)
