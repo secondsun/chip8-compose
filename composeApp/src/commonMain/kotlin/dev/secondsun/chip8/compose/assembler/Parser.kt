@@ -118,7 +118,10 @@ private fun ParserContext.parseOne(): ParsedToken {
             val name = token.name
             if (macros.containsKey(name)) {
                 consumeMacroExpand()
-            } else {
+            } else if (aliases.containsKey(name)) {
+                consumeAssign()
+            }
+            else {
                 consumeCall()
             }
         }
@@ -519,7 +522,7 @@ private fun ParserContext.consumeMacroExpand(): ParsedToken {
 }
 
 private fun ParserContext.consumeAssign(): ParsedToken {
-    val register = tokenProvider.consume<Token.Register>()
+    val register = tokenProvider.consume<Any>()
     when (val operator = tokenProvider.consume<Any>()) {
         is Token.Assignment,
         is Token.XorAssignment,

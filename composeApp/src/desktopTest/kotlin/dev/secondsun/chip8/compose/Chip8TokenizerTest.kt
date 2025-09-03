@@ -16,6 +16,7 @@ import kotlin.test.assertNotNull
 
 class Chip8TokenizerTest {
 
+
     @Test
     fun testTokenizeStrings() {
         val program = """

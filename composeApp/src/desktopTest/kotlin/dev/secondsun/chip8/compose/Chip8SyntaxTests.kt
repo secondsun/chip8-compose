@@ -414,12 +414,13 @@ class Chip8SyntaxTests {
             :alias NTH { 3 + CALLS }
             :alias eye i
             :alias toobig 16
+            :alias suspicion-level vc
         """.trimIndent()
 
         val parsed = parse(program)
         val tokens = parsed.parsedTokens
 
-        assertEquals(5, tokens.size)
+        assertEquals(6, tokens.size)
         assertTrue(tokens[0].tokens[2] is Token.Register)
         assertEquals(ParsedTokenType.Alias, tokens[0].type)
 
@@ -427,6 +428,10 @@ class Chip8SyntaxTests {
         assertTrue(tokens[2].tokens[2] is Token.LBrace)
         assertEquals(ParsedTokenType.Error, tokens[3].type)
         assertEquals(ParsedTokenType.Error, tokens[4].type)
+
+        assertEquals(ParsedTokenType.Alias, tokens[5].type)
+        assertEquals("suspicion-level", (tokens[5].tokens[1] as Token.Identifier).name)
+        assertEquals(0xc,parsed.aliases["suspicion-level"]!!.evaluate())
 
     }
 
