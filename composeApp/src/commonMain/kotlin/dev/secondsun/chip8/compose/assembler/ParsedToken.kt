@@ -52,11 +52,13 @@ enum class ParsedTokenType {
     Lores,
     Hires,
     SaveFlags,
-    LoadFlads,
     I,
     Call,
     Condition,
-    Assignment
+    Assignment,
+    LoadFlags,
+    IAdditionAssign,
+    IAssign
 
 
 }

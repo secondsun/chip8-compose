@@ -296,7 +296,10 @@ fun tokenize(program: String): List<Token> {
             tokens.add(Token.makeRegister(identifier, line, startColumn))
         } else if (DIRECTIVES.contains(identifier)) {
             tokens.add(Token.makeDirective(identifier, line, startColumn))
-        } else {
+        } else if (identifier == "exit") {
+            tokens.add(Token.Exit( line, startColumn))
+        }
+        else {
             tokens.add(Token.Identifier(identifier, line, startColumn))
         }
     }

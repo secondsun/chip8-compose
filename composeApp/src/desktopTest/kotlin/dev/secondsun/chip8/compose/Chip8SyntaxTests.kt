@@ -494,4 +494,9 @@ class Chip8SyntaxTests {
         assertTrue(parsed.parsedTokens.none { it.type == ParsedTokenType.Error })
     }
 
+    @Test
+    fun `test many more things`() {
+        TODO("Test scrolls, test planes, test iAssign, test raw number values, test macro expand...")
+    }
+
 }

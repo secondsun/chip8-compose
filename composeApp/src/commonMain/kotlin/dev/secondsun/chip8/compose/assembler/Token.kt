@@ -46,6 +46,11 @@ sealed interface Token {
             get() = TokenType.BinaryAnd
     }
 
+    data class Exit(override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.Exit
+    }
+
     data class LParen(override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.LParen
@@ -557,6 +562,7 @@ enum class TokenType {
     Begin,
     Else,
     End,
+    Exit,
     Jump,
     Jump0,
     Native,
