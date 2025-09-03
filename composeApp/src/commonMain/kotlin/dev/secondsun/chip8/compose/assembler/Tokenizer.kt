@@ -54,10 +54,12 @@ fun tokenize(program: String): List<Token> {
      */
     fun nextLine() {
 
+        val newLine = getCharacter()
+
         index++
 
         //Handle windows \r\n
-        if (canContinue() && (getCharacter() == '\r' || getCharacter() == '\n')) {
+        if (canContinue() && ((getCharacter() == '\r' && newLine == '\n') || (getCharacter() == '\n' && newLine == '\r'))) {
             index++
         }
 

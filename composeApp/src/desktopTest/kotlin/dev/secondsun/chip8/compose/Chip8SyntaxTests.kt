@@ -1,13 +1,19 @@
 package dev.secondsun.chip8.compose
 
 
+import chip8_compose.composeapp.generated.resources.Res
 import dev.secondsun.chip8.compose.assembler.ParsedConditionalToken
+import dev.secondsun.chip8.compose.assembler.ParsedMacroExpandToken
+import dev.secondsun.chip8.compose.assembler.ParsedToken
 import dev.secondsun.chip8.compose.assembler.ParsedTokenType
 import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.parse
+import dev.secondsun.chip8.compose.assembler.tokenize
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.net.URI
+import java.nio.file.Paths
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
@@ -83,8 +89,10 @@ class Chip8SyntaxTests {
         assertEquals(ParsedTokenType.Macro, tokens[0].type)
         assertEquals(ParsedTokenType.Macro, tokens[1].type)
 
-        assertTrue(parsed.macros["steps-reset-level"]!!.first() is Token.LBrace)
-        assertEquals(5, parsed.macros["steps-reset-level"]!!.size)
+        assertTrue(parsed.macros["steps-reset-level"]!!.body.first() is Token.LBrace)
+        assertEquals(7, parsed.macros["steps-reset-level"]!!.tokens.size)
+        assertEquals(5, parsed.macros["steps-reset-level"]!!.body.size)
+
 
     }
 
@@ -309,10 +317,10 @@ class Chip8SyntaxTests {
         val tokens = parsed.parsedTokens
 
         assertEquals(1, tokens.size)
-        assertTrue(parsed.macros["steps-show-digits"]!!.first() is Token.Identifier)
-        assertEquals("SRC", (parsed.macros["steps-show-digits"]!!.first() as Token.Identifier).name)
-        assertTrue { parsed.macros["steps-show-digits"]!!.last() is Token.RBrace }
-        assertFalse { parsed.macros["steps-show-digits"]!!.any { it is Token.Error } }
+        assertTrue(parsed.macros["steps-show-digits"]!!.tokens[1] is Token.Identifier)
+        assertEquals("SRC", (parsed.macros["steps-show-digits"]!!.params.first() as Token.Identifier).name)
+        assertTrue { parsed.macros["steps-show-digits"]!!.body.last() is Token.RBrace }
+        assertFalse { parsed.macros["steps-show-digits"]!!.tokens.any { it is Token.Error } }
     }
 
     @Test
@@ -327,13 +335,13 @@ class Chip8SyntaxTests {
 
         val parsed = parse(program)
         val tokens = parsed.parsedTokens
-        assertTrue(parsed.macros["steps-show"]!!.first() is Token.LBrace)
-        assertTrue(parsed.macros["steps-show"]!!.last() is Token.RBrace)
-        assertEquals(13, parsed.macros["steps-show"]!!.size)
+        assertTrue(parsed.macros["steps-show"]!!.body.first() is Token.LBrace)
+        assertTrue(parsed.macros["steps-show"]!!.body.last() is Token.RBrace)
+        assertEquals(15, parsed.macros["steps-show"]!!.tokens.size)
 
 
         assertEquals(ParsedTokenType.Macro, tokens[0].type)
-        assertTrue(parsed.macros["steps-show"]!!.last() is Token.RBrace)
+        assertTrue(parsed.macros["steps-show"]!!.body.last() is Token.RBrace)
 
         assertEquals(1, tokens.size)
     }
@@ -497,6 +505,54 @@ class Chip8SyntaxTests {
     @Test
     fun `test many more things`() {
         TODO("Test scrolls, test planes, test iAssign, test raw number values, test macro expand...")
+    }
+
+    @Test
+    fun `parse macros`() {
+        val program = """
+            :macro foo SIZE {
+                v0 := SIZE
+                i := 0x42
+            }
+            foo 0x42
+        """
+
+        val parsed = parse(program)
+        assertEquals(2, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Macro, parsed.parsedTokens[0].type)
+        val macroToken = parsed.parsedTokens[1] as ParsedMacroExpandToken
+        assertEquals(1, macroToken.params.size)
+        assertTrue(macroToken.params[0] is Token.Number)
+
+    }
+
+
+    @Test
+    fun `parse macros should error on bad params`() {
+        val program = """
+            :macro foo SIZE {
+                v0 := SIZE
+                i := 0x42
+            }
+            foo #missing param
+        """
+
+        val parsed = parse(program)
+        assertEquals(2, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Error, parsed.parsedTokens[1].type)
+
+
+    }
+
+    @Test
+    fun `big file should parse without errors`() {
+
+            val programUri = URI.create(Res.getUri("files/big.8o"))
+            val program = Paths.get(programUri).toFile().readText()
+            val tokens = parse(program)
+            tokens.parsedTokens.filter {it.type == ParsedTokenType.Error}.forEach { println(it); println(it.tokens.joinToString(" ") { it.toString()})}
+            assertTrue { tokens.parsedTokens.none { it.type ==  ParsedTokenType.Error } }
+
     }
 
 }

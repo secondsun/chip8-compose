@@ -363,6 +363,24 @@ class Chip8TokenizerTest {
         assertTrue { tokens.none { it is Token.Error } }
 
     }
+
+    @Test
+    fun `get line numbers right`() {
+        val program = """
+            : main # 
+            
+            v1 := 0x82
+            v2 := 0b10101010
+            # comment
+            
+            v3 += -42
+        """.trimIndent()
+        val tokens = tokenize(program)
+        assertEquals(11, tokens.size)
+        assertEquals(0, tokens[0].line)
+        assertEquals(2, tokens[2].line)
+    }
+
     @Test
     fun testBigFile() {
         val programUri = URI.create(Res.getUri("files/big.8o"))

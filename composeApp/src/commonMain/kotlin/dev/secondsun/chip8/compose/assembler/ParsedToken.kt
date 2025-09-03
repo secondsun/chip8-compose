@@ -1,8 +1,18 @@
 package dev.secondsun.chip8.compose.assembler
 
-open class ParsedToken(val type : ParsedTokenType, val tokens: List<Token>)
+import java.net.http.HttpResponse
+
+open class ParsedToken(val type : ParsedTokenType, val tokens: List<Token>) {
+    override fun toString(): String {
+        return "${type}, tokens size : ${tokens.size}, lines ${tokens.map { it.line }.toSet()}"
+    }
+}
 
 class ParsedConditionalToken(type : ParsedTokenType, tokens: List<Token>, val condition: List<ParsedToken>) : ParsedToken(type, tokens)
+
+class ParsedMacroExpandToken(tokens: List<Token>, val params: List<Token>) : ParsedToken(ParsedTokenType.MacroExpand, tokens)
+
+class ParsedMacroToken(tokens: List<Token>, val params: List<Token>, val body: List<Token>) : ParsedToken(ParsedTokenType.Macro, tokens)
 
 enum class ParsedTokenType {
     Error,
@@ -58,7 +68,8 @@ enum class ParsedTokenType {
     Assignment,
     LoadFlags,
     IAdditionAssign,
-    IAssign
+    IAssign,
+    MacroExpand
 
 
 }

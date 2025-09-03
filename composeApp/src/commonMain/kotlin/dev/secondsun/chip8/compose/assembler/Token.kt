@@ -8,21 +8,39 @@ sealed interface Token {
     data class StringToken(val value: String, override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.StringToken
+
+        override fun toString(): String {
+            return "String \"$value\" ${line}:${column}"
+        }
     }
 
     data class Identifier(val name: String, override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.Identifier
+
+        override fun toString(): String {
+            return "Identifier \"$name\" ${line}:${column}"
+        }
     }
 
     data class Number(val value: Int, override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.Number
+
+
+        override fun toString(): String {
+            return "Number \"$value\" ${line}:${column}"
+        }
     }
 
     data class Error(val message: String, override val line: Int, override val column: Int) : Token {
         override val type: TokenType
             get() = TokenType.Error
+
+
+        override fun toString(): String {
+            return "Error \"$message\" ${line}:${column}"
+        }
     }
 
     data class Register(val register: Registers, override val line: Int, override val column: Int) : Token {

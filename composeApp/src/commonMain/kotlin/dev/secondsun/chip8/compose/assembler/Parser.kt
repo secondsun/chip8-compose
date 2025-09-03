@@ -1,5 +1,7 @@
 package dev.secondsun.chip8.compose.assembler
 
+import androidx.compose.ui.graphics.Path
+
 /**
  * Once a program is parsed, the parserOutput includes
  *  : A list of instructions that can be assembled into machine code
@@ -13,7 +15,7 @@ interface ParserOutput {
     val aliases: Map<String, IntExpression>
     val mutables: Map<String, IntExpression>
     val parsedTokens: List<ParsedToken>
-    val macros: Map<String, List<Token>>
+    val macros: Map<String, ParsedMacroToken>
     val stringModes: Map<String, StringMode>
 }
 
@@ -25,7 +27,7 @@ class ParserContext(program: List<Token>) : ParserOutput {
     override val mutables = mutableMapOf<String, IntExpression>()
     val tokenProvider = TokenProvider(program)
     override val parsedTokens = mutableListOf<ParsedToken>()
-    override val macros = mutableMapOf<String, List<Token>>()
+    override val macros = mutableMapOf<String, ParsedMacroToken>()
     override val stringModes = mutableMapOf<String, StringMode>()
     val branches = ArrayDeque<Triple<ParsedToken, Int, String>>()
     val loops = ArrayDeque<Pair<ParsedToken, Int>>()
@@ -70,11 +72,13 @@ private fun ParserContext.parseOne(): ParsedToken {
             tokenProvider.consume<Token.Audio>()
             return (ParsedToken(ParsedTokenType.Audio, listOf(token)))
         }
+
         is Token.BCD -> handleBCD()
         is Token.Begin -> {
             tokenProvider.consume<Token.Begin>()
             return (ParsedToken(ParsedTokenType.Begin, listOf(token)))
         }
+
         is Token.Breakpoint -> defineBreakpoint()
         is Token.Buzzer -> defineBuzzer()
         is Token.Byte -> handleByte()
@@ -95,12 +99,20 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.End -> {
             handleEnd()
         }
+
         is Token.Error -> {
             tokenProvider.consume<Token.Error>()
             return (ParsedToken(ParsedTokenType.Error, listOf(token)))
         }
-        is Token.Exit -> {return (ParsedToken(ParsedTokenType.Exit, listOf(tokenProvider.consume<Token.Exit>())))}
-        is Token.Hires -> {return (ParsedToken(ParsedTokenType.Hires, listOf(tokenProvider.consume<Token.Hires>())))}
+
+        is Token.Exit -> {
+            return (ParsedToken(ParsedTokenType.Exit, listOf(tokenProvider.consume<Token.Exit>())))
+        }
+
+        is Token.Hires -> {
+            return (ParsedToken(ParsedTokenType.Hires, listOf(tokenProvider.consume<Token.Hires>())))
+        }
+
         is Token.I -> consumeIAssign()
         is Token.Identifier -> {
             val name = token.name
@@ -117,7 +129,10 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Load -> handleLoad()
         is Token.LoadFlags -> consumeLoadFlags()
         is Token.Loop -> consumeLoop()
-        is Token.Lores -> {return (ParsedToken(ParsedTokenType.Lores, listOf(tokenProvider.consume<Token.Lores>())))}
+        is Token.Lores -> {
+            return (ParsedToken(ParsedTokenType.Lores, listOf(tokenProvider.consume<Token.Lores>())))
+        }
+
         is Token.Macro -> defineMacro()
         is Token.Moniter -> defineMonitor()
         is Token.Native -> consumeNative()
@@ -136,8 +151,14 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Save -> handleSave()
         is Token.SaveFlags -> consumeSaveFlags()
         is Token.ScrollDown -> consumeScrollDown()
-        is Token.ScrollLeft -> {return (ParsedToken(ParsedTokenType.ScrollLeft, listOf(tokenProvider.consume<Token.ScrollLeft>())))}
-        is Token.ScrollRight  -> {return (ParsedToken(ParsedTokenType.ScrollRight, listOf(tokenProvider.consume<Token.ScrollRight>())))}
+        is Token.ScrollLeft -> {
+            return (ParsedToken(ParsedTokenType.ScrollLeft, listOf(tokenProvider.consume<Token.ScrollLeft>())))
+        }
+
+        is Token.ScrollRight -> {
+            return (ParsedToken(ParsedTokenType.ScrollRight, listOf(tokenProvider.consume<Token.ScrollRight>())))
+        }
+
         is Token.ScrollUp -> consumeScrollUp()
         is Token.Sprite -> consumeSprite()
         is Token.StringMode -> defineStringMode()
@@ -154,7 +175,8 @@ private fun ParserContext.parseOne(): ParsedToken {
         }
 
         else -> {
-            throw IllegalStateException("Unexpected token $token")
+            tokenProvider.consume<Any>()
+            return ParsedToken(ParsedTokenType.Error, listOf(token))
         }
     }
 }
@@ -165,8 +187,8 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
     if (operator is Token.Assignment) {
         val next = tokenProvider.consume<Any>()
         if (next is Token.Identifier) {
-            when(next.name) {
-                "hex","bighex" -> {
+            when (next.name) {
+                "hex", "bighex" -> {
                     val register = tokenProvider.consume<Any>()
                     if (isRegister(register)) {
                         return ParsedToken(ParsedTokenType.IAssign, listOf(i, operator, next, register))
@@ -175,6 +197,7 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
                         return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
                     }
                 }
+
                 "long" -> {
                     val value = tokenProvider.consume<Any>()
                     if (value is Token.Number) {
@@ -186,11 +209,12 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
                             val errorToken = Token.Error("Label ${value.name} not defined", value.line, value.column)
                             return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
                         }
-                    }else {
+                    } else {
                         val errorToken = Token.Error("Expected Number", value.line, value.column)
                         return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
                     }
                 }
+
                 else -> {
                     val errorToken = Token.Error("Expected hex, bighex or long", next.line, next.column)
                     return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
@@ -473,7 +497,25 @@ private fun ParserContext.consumeCall(): ParsedToken {
 }
 
 private fun ParserContext.consumeMacroExpand(): ParsedToken {
-    TODO()
+    val macroName = tokenProvider.consume<Token.Identifier>() as Token.Identifier
+    val macroToken = this.macros.get(macroName.name)!!
+    if (macroToken.params.isEmpty()) {
+        return ParsedMacroExpandToken(listOf(macroName), listOf())
+    } else {
+        val paramTokens = mutableListOf<Token>()
+        for(token in macroToken.params) {
+            paramTokens.add(tokenProvider.consume<Any>())
+        }
+
+        if (paramTokens.any() { it is Token.Error }) {
+            val error = Token.Error("Error parsing macro ${macroName.name}", macroName.line, macroName.column)
+            return ParsedToken(ParsedTokenType.Error, listOf(macroName) + paramTokens + listOf(error))
+        }
+
+        return ParsedMacroExpandToken(listOf(macroName) + paramTokens, paramTokens)
+
+    }
+
 }
 
 private fun ParserContext.consumeAssign(): ParsedToken {
@@ -956,10 +998,9 @@ private fun ParserContext.defineMacro(): ParsedToken {
 
                     macroTokens.addAll(arguments)
                     macroTokens.addAll(body)
-                    macros[identifier.name] = macroTokens
-                    return (ParsedToken(
-                        ParsedTokenType.Macro,
-                        buildList { add(macro); add(identifier); addAll(arguments); addAll(body) }))
+                    val toReturn = ParsedMacroToken(buildList { add(macro); add(identifier); addAll(arguments); addAll(body) }, arguments, body)
+                    macros[identifier.name] = toReturn
+                    return toReturn
                 } else {
                     val errorWithArguments = buildList<Token> {
                         add(macro)
