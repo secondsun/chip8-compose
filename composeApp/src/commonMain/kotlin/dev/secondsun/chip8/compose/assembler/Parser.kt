@@ -145,7 +145,7 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Pitch -> definePitch()
         is Token.Plane -> consumePlane()
         is Token.Pointer -> handlePointer()
-        is Token.Register -> consumeAssign()
+        is Token.Register ->if  (token.register == Registers.i) consumeIAssign() else consumeAssign()
         is Token.Return -> {
             tokenProvider.consume<Token.Return>()
             return (ParsedToken(ParsedTokenType.Return, listOf(token)))
@@ -185,7 +185,7 @@ private fun ParserContext.parseOne(): ParsedToken {
 }
 
 private fun ParserContext.consumeIAssign(): ParsedToken {
-    val i = tokenProvider.consume<Token.I>()
+    val i = tokenProvider.consume<Token>()
     val operator = tokenProvider.consume<Any>()
     if (operator is Token.Assignment) {
         val next = tokenProvider.consume<Any>()
@@ -600,7 +600,7 @@ private fun ParserContext.consumeIf(): ParsedToken {
 }
 
 private fun ParserContext.consumeCondition(): ParsedToken {
-    val token = tokenProvider.consume<Token.Register>()
+    val token = tokenProvider.consume<Token>()
 
     if (token is Token.Register || token is Token.Identifier) {
         when (val check = tokenProvider.consume<Any>()) {
@@ -1382,11 +1382,13 @@ private fun ParserContext.handleCalc(): ParsedToken {
 
                 is Token.Number -> {
                     val number = tokenProvider.consume<Token.Number>()
+                    mutables[identifier.name] = IntExpression(listOf(number))
                     return (ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, number)))
                 }
 
                 is Token.Identifier -> {
                     val label = tokenProvider.consume<Token.Identifier>() as Token.Identifier
+                    mutables[identifier.name] = IntExpression(listOf(label))
                     return (ParsedToken(ParsedTokenType.Calc, listOf(calc, identifier, label)))
                 }
 
@@ -1431,7 +1433,7 @@ private fun ParserContext.defineLabel(): ParsedToken {
 private fun ParserContext.defined(label: String): Boolean {
     return labels.containsKey(label) || aliases.containsKey(label) ||
             constants.containsKey(label) || macros.containsKey(label) ||
-            stringModes.containsKey(label)
+            stringModes.containsKey(label) || mutables.containsKey(label)
 }
 
 class TokenProvider(val program: List<Token>) {

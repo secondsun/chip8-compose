@@ -560,4 +560,14 @@ class Chip8SyntaxTests {
 
     }
 
+    @Test
+    fun `can parse forward declarations`() {
+        TODO()
+    }
+
+    @Test
+    fun `define OCTO constants`() {
+        TODO()
+    }
+
 }
