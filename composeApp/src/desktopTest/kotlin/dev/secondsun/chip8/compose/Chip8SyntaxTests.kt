@@ -567,7 +567,15 @@ class Chip8SyntaxTests {
 
     @Test
     fun `define OCTO constants`() {
-        TODO()
+        val program = """
+            vf := OCTO_KEY_E
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(1, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Assignment, parsed.parsedTokens[0].type)
+        assertEquals("OCTO_KEY_E", (parsed.parsedTokens[0].tokens[2] as Token.Identifier).name)
+        assertEquals(0x6, parsed.constants["OCTO_KEY_E"]?.evaluate())
+
     }
 
 }

@@ -21,7 +21,24 @@ interface ParserOutput {
 
 class ParserContext(program: List<Token>) : ParserOutput {
 
-    override val constants = mutableMapOf<String, IntExpression>()
+    override val constants = mutableMapOf<String, IntExpression>().apply {
+        put("OCTO_KEY_1", IntExpression(listOf(Token.Number(0x1,0,0))));
+        put("OCTO_KEY_2", IntExpression(listOf(Token.Number(0x2,0,0))));
+        put("OCTO_KEY_3", IntExpression(listOf(Token.Number(0x3,0,0))));
+        put("OCTO_KEY_4", IntExpression(listOf(Token.Number(0xC,0,0))));
+        put("OCTO_KEY_Q", IntExpression(listOf(Token.Number(0x4,0,0))));
+        put("OCTO_KEY_W", IntExpression(listOf(Token.Number(0x5,0,0))));
+        put("OCTO_KEY_E", IntExpression(listOf(Token.Number(0x6,0,0))));
+        put("OCTO_KEY_R", IntExpression(listOf(Token.Number(0xD,0,0))));
+        put("OCTO_KEY_A", IntExpression(listOf(Token.Number(0x7,0,0))));
+        put("OCTO_KEY_S", IntExpression(listOf(Token.Number(0x8,0,0))));
+        put("OCTO_KEY_D", IntExpression(listOf(Token.Number(0x9,0,0))));
+        put("OCTO_KEY_F", IntExpression(listOf(Token.Number(0xE,0,0))));
+        put("OCTO_KEY_Z", IntExpression(listOf(Token.Number(0xA,0,0))));
+        put("OCTO_KEY_X", IntExpression(listOf(Token.Number(0x0,0,0))));
+        put("OCTO_KEY_C", IntExpression(listOf(Token.Number(0xB,0,0))));
+        put("OCTO_KEY_V", IntExpression(listOf(Token.Number(0xF,0,0))));
+    }
     override val labels = mutableMapOf<String, IntExpression>()
     override val aliases = mutableMapOf<String, IntExpression>()
     override val mutables = mutableMapOf<String, IntExpression>()
