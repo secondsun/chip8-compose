@@ -350,16 +350,31 @@ class Chip8SyntaxTests {
     fun testUnpack() {
         val program = """
             :unpack long 0xaa
-            :unpack 0xa
+            :unpack 0xa forward
             :unpack :const
+            : forward
+            0x42
         """.trimIndent()
         val context = parse(program)
         val parsed = context.parsedTokens
-        assertEquals(3, parsed.size)
+        assertEquals(5, parsed.size)
         assertEquals(3, parsed[0].tokens.size)
+        assertEquals(3, parsed[1].tokens.size)
         assertEquals(ParsedTokenType.Unpack, parsed[0].type)
-        assertEquals(2, parsed[1].tokens.size)
+        assertEquals(3, parsed[1].tokens.size)
         assertEquals(ParsedTokenType.Unpack, parsed[1].type)
+        assertEquals(ParsedTokenType.Error, parsed[2].type)
+    }
+
+    @Test
+    fun `there should  be an error when unpack is missing long and has a label`() {
+        val program = """
+            : forward
+            0x42 
+            :unpack forward
+        """.trimIndent()
+        val context = parse(program)
+        val parsed = context.parsedTokens
         assertEquals(ParsedTokenType.Error, parsed[2].type)
     }
 
@@ -562,7 +577,14 @@ class Chip8SyntaxTests {
 
     @Test
     fun `can parse forward declarations`() {
-        TODO()
+        val program = """
+            :pointer forward
+            : forward
+            0x42
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(3, parsed.parsedTokens.size)
+        assertEquals(ParsedTokenType.Pointer, parsed.parsedTokens[0].type)
     }
 
     @Test

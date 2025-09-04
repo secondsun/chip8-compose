@@ -476,6 +476,15 @@ sealed interface Token {
             get() = TokenType.Minus
     }
 
+    data class ForwardIdentifier(val name: String, override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.ForwardIdentifier
+
+        override fun toString(): String {
+            return "ForwardIdentifier \"$name\" ${line}:${column}"
+        }
+    }
+
 
     companion object {
         fun makeDirective(identifier: String, line: Int, startColumn: Int): Token {
@@ -637,6 +646,7 @@ enum class TokenType {
     Tilde,
     Exclaimation,
     Caret,
-    Percent
+    Percent,
+    ForwardIdentifier
 
 }
