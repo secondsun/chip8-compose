@@ -583,7 +583,7 @@ class Chip8SyntaxTests {
     }
 
     @Test
-    fun `big file should parse without errors`() {
+    fun `big files should parse without errors`() {
 
             val programUri = URI.create(Res.getUri("files/big.8o"))
             val program = Paths.get(programUri).toFile().readText()
@@ -591,6 +591,14 @@ class Chip8SyntaxTests {
             tokens.parsedTokens.filter {it.type == ParsedTokenType.Error}.forEach { println(it); println(it.tokens.joinToString(" ") { it.toString()})}
             assertTrue { tokens.parsedTokens.none { it.type ==  ParsedTokenType.Error } }
 
+        val programFolderUri = URI.create(Res.getUri("files/examples"))
+        val programFolder = Paths.get(programFolderUri).toFile()
+        programFolder.walk().filter { it.isFile && it.extension == "8o" }.forEach { programFile ->
+            val program = programFile.readText()
+            val tokens = parse(program)
+            tokens.parsedTokens.filter {it.type == ParsedTokenType.Error}.forEach { println( " ${programFile.name} failed to parse " + it.tokens.joinToString(" ") { it.toString()})}
+            assertTrue( { tokens.parsedTokens.none { it.type ==  ParsedTokenType.Error } }, "Failed to parse ${programFile.name}")
+        }
     }
 
     @Test
