@@ -64,7 +64,7 @@ class ParsedMacroExpandToken(tokens: List<Token>, val params: List<Token>) : Par
     }
 }
 
-class ParsedMacroToken(tokens: List<Token>, val params: List<Token>, val body: List<Token>) : ParsedToken(ParsedTokenType.Macro, tokens) {
+class ParsedMacroToken(tokens: List<Token>, val params: List<Token>, val body: List<Token>, var calls: Int = 0) : ParsedToken(ParsedTokenType.Macro, tokens) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

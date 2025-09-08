@@ -89,9 +89,8 @@ class Chip8SyntaxTests {
         assertEquals(ParsedTokenType.Macro, tokens[0].type)
         assertEquals(ParsedTokenType.Macro, tokens[1].type)
 
-        assertTrue(parsed.macros["steps-reset-level"]!!.body.first() is Token.LBrace)
         assertEquals(7, parsed.macros["steps-reset-level"]!!.tokens.size)
-        assertEquals(5, parsed.macros["steps-reset-level"]!!.body.size)
+        assertEquals(3, parsed.macros["steps-reset-level"]!!.body.size)
 
 
     }
@@ -319,7 +318,6 @@ class Chip8SyntaxTests {
         assertEquals(1, tokens.size)
         assertTrue(parsed.macros["steps-show-digits"]!!.tokens[1] is Token.Identifier)
         assertEquals("SRC", (parsed.macros["steps-show-digits"]!!.params.first() as Token.Identifier).name)
-        assertTrue { parsed.macros["steps-show-digits"]!!.body.last() is Token.RBrace }
         assertFalse { parsed.macros["steps-show-digits"]!!.tokens.any { it is Token.Error } }
     }
 
@@ -335,13 +333,10 @@ class Chip8SyntaxTests {
 
         val parsed = parse(program)
         val tokens = parsed.parsedTokens
-        assertTrue(parsed.macros["steps-show"]!!.body.first() is Token.LBrace)
-        assertTrue(parsed.macros["steps-show"]!!.body.last() is Token.RBrace)
         assertEquals(15, parsed.macros["steps-show"]!!.tokens.size)
 
 
         assertEquals(ParsedTokenType.Macro, tokens[0].type)
-        assertTrue(parsed.macros["steps-show"]!!.body.last() is Token.RBrace)
 
         assertEquals(1, tokens.size)
     }
@@ -524,7 +519,7 @@ class Chip8SyntaxTests {
 
     @Test
     fun `test many more things`() {
-        TODO("Test scrolls, test planes, test iAssign, test raw number values, test macro expand...")
+        TODO("Test scrolls, test planes, test iAssign, test raw number tokens become data in the parsing...")
     }
 
     @Test
@@ -532,18 +527,23 @@ class Chip8SyntaxTests {
         val program = """
             :macro foo SIZE {
                 v0 := SIZE
-                i := 0x42
+                i := CALLS
             }
+            foo 0x42
             foo 0x42
         """
 
         val parsed = parse(program)
-        assertEquals(2, parsed.parsedTokens.size)
+        assertEquals(7, parsed.parsedTokens.size)
         assertEquals(ParsedTokenType.Macro, parsed.parsedTokens[0].type)
         val macroToken = parsed.parsedTokens[1] as ParsedMacroExpandToken
         assertEquals(1, macroToken.params.size)
         assertTrue(macroToken.params[0] is Token.Number)
+        assertTrue { parsed.parsedTokens[2].type == ParsedTokenType.Assignment }
+        assertTrue { parsed.parsedTokens[2].tokens[2] is Token.Number }
 
+        assertTrue { parsed.parsedTokens[6].type == ParsedTokenType.IAssign }
+        assertTrue { (parsed.parsedTokens[6].tokens[2] as Token.Number).value == 2 }
     }
 
 
@@ -562,6 +562,24 @@ class Chip8SyntaxTests {
         assertEquals(ParsedTokenType.Error, parsed.parsedTokens[1].type)
 
 
+    }
+
+    @Test
+    fun `test calc`() {
+        val program = ":calc DATA_POS { HERE }  :org { CODE_POS }"
+        val parsed = parse(program)
+        assertEquals(2, parsed.parsedTokens.size)
+    }
+
+    @Test
+    fun `macros with calcs can expand`() {
+        val program = """
+            :macro to-code { :calc DATA_POS { HERE }  :org { CODE_POS } }
+            to-code
+        """.trimIndent()
+        val parsed = parse(program)
+        assertEquals(4, parsed.parsedTokens.size)
+        assertTrue { parsed.parsedTokens.flatMap { it.tokens }.none{it is Token.Error }}
     }
 
     @Test

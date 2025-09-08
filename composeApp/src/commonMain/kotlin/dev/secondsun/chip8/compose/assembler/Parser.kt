@@ -58,34 +58,35 @@ fun parse(program: String): ParserOutput {
 
 fun parse(program: List<Token>): ParserOutput {
     val context = ParserContext(program)
-
-
-    with(context) {
-        while (tokenProvider.hasMore()) {
-            val token = tokenProvider.peek()
-            if (token is Token.Proto) {
-                //Deprecated
-                tokenProvider.consume<Token.Proto>()
-            } else {
-                parsedTokens.add(parseOne())
-            }
-        }
-        for (key in forwards.keys) {
-            if (!defined(key)) {
-                forwards[key]!!.forEach {
-                    parsedTokens.add(
-                        ParsedToken(
-                            ParsedTokenType.Error,
-                            listOf(Token.Error("Undefined Token ${it.name}, ${it.line}", it.line, it.column))
-                        )
-                    )
-                }
-            }
-        }
-    }
+    context.parseTokens()
     return context
 
 }
+
+private fun ParserContext.parseTokens() {
+    while (tokenProvider.hasMore()) {
+        val token = tokenProvider.peek()
+        if (token is Token.Proto) {
+            //Deprecated
+            tokenProvider.consume<Token.Proto>()
+        } else {
+            parsedTokens.add(parseOne())
+        }
+    }
+    for (key in forwards.keys) {
+        if (!defined(key)) {
+            forwards[key]!!.forEach {
+                parsedTokens.add(
+                    ParsedToken(
+                        ParsedTokenType.Error,
+                        listOf(Token.Error("Undefined Token ${it.name}, ${it.line}", it.line, it.column))
+                    )
+                )
+            }
+        }
+    }
+}
+
 
 private fun ParserContext.parseOne(): ParsedToken {
     return when (val token = tokenProvider.peek()) {
@@ -144,7 +145,7 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Identifier -> {
             val name = token.name
             if (macros.containsKey(name)) {
-                consumeMacroExpand()
+                macroExpand()
             } else if (aliases.containsKey(name)) {
                 consumeAssign()
             } else {
@@ -173,6 +174,7 @@ private fun ParserContext.parseOne(): ParsedToken {
         is Token.Pointer -> handlePointer()
         is Token.Register ->
             if (token.register == Registers.i) consumeIAssign() else consumeAssign()
+
         is Token.Return -> {
             tokenProvider.consume<Token.Return>()
             return (ParsedToken(ParsedTokenType.Return, listOf(token)))
@@ -234,7 +236,7 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
                     }
 
                     else -> {
-                        return handleNumberOrLabel(listOf(i, operator, next), ParsedTokenType.IAssign)
+                        return handleNumberOrLabel(listOf(i, operator, next), ParsedTokenType.IAssign, true)
                     }
                 }
             }
@@ -424,7 +426,7 @@ private fun ParserContext.consumeSprite(): ParsedToken {
     if (register1 is Token.Error) {
         return (ParsedToken(ParsedTokenType.Error, listOf(sprite, register1)))
     } else if (register1 is Token.Identifier) {
-        if ( !aliases.containsKey(register1.name)) {
+        if (!aliases.containsKey(register1.name)) {
             val errorToken = Token.Error("Label ${register1.name} not defined", register1.line, register1.column)
             return (ParsedToken(ParsedTokenType.Error, listOf(sprite, errorToken)))
         }
@@ -438,7 +440,7 @@ private fun ParserContext.consumeSprite(): ParsedToken {
     if (register2 is Token.Error) {
         return (ParsedToken(ParsedTokenType.Error, listOf(sprite, register1)))
     } else if (register2 is Token.Identifier) {
-        if ( !aliases.containsKey(register2.name)) {
+        if (!aliases.containsKey(register2.name)) {
             val errorToken = Token.Error("Label ${register2.name} not defined", register2.line, register2.column)
             return (ParsedToken(ParsedTokenType.Error, listOf(sprite, errorToken)))
         }
@@ -484,8 +486,9 @@ private fun ParserContext.consumeOperatorWithWideParameter(jumpType: ParsedToken
 }
 
 private fun ParserContext.consumeCall(): ParsedToken {
-    when (val call = tokenProvider.consume<Any>()) {
+    when (val call = tokenProvider.peek()) {
         is Token.Call -> {
+            tokenProvider.consume<Token.Call>()
             val next = tokenProvider.consume<Any>()
             if (next is Token.Identifier) {
                 if (labels.containsKey(next.name)) {
@@ -503,12 +506,7 @@ private fun ParserContext.consumeCall(): ParsedToken {
         }
 
         is Token.Identifier -> {
-            if (labels.containsKey(call.name)) {
-                return (ParsedToken(ParsedTokenType.Call, listOf(call, call)))
-            } else {
-                val errorToken = Token.Error("Label ${call.name} not defined", call.line, call.column)
-                return (ParsedToken(ParsedTokenType.Error, listOf(call, errorToken)))
-            }
+            return handleNumberOrLabel(listOf(), ParsedTokenType.Call, true)
         }
 
         else -> {
@@ -518,25 +516,41 @@ private fun ParserContext.consumeCall(): ParsedToken {
     }
 }
 
-private fun ParserContext.consumeMacroExpand(): ParsedToken {
+private fun ParserContext.macroExpand(): ParsedToken {
     val macroName = tokenProvider.consume<Token.Identifier>() as Token.Identifier
-    val macroToken = this.macros.get(macroName.name)!!
-    if (macroToken.params.isEmpty()) {
-        return ParsedMacroExpandToken(listOf(macroName), listOf())
-    } else {
-        val paramTokens = mutableListOf<Token>()
-        for (token in macroToken.params) {
+    val macro = this.macros.get(macroName.name)!!
+    val paramTokens = mutableListOf<Token>()
+    macro.calls++
+
+    if (!macro.params.isEmpty()) {
+        for (token in macro.params) {
             paramTokens.add(tokenProvider.consume<Any>())
         }
-
         if (paramTokens.any { it is Token.Error }) {
             val error = Token.Error("Error parsing macro ${macroName.name}", macroName.line, macroName.column)
             return ParsedToken(ParsedTokenType.Error, listOf(macroName) + paramTokens + listOf(error))
         }
-
-        return ParsedMacroExpandToken(listOf(macroName) + paramTokens, paramTokens)
-
     }
+
+    val expandedMacros = mutableListOf<Token>()
+    for (macroToken in macro.body) {
+        val params = macro.params.map { (it as Token.Identifier).name }
+        if (macroToken is Token.Identifier) {
+            if (macroToken.name in params) {
+                expandedMacros.add(paramTokens[params.indexOf(macroToken.name)])
+            } else if (macroToken.name == "CALLS") {
+                expandedMacros.add(Token.Number(macro.calls, 0, 0))
+            } else {
+                expandedMacros.add(macroToken)
+            }
+        } else {
+            expandedMacros.add(macroToken)
+        }
+    }
+
+    tokenProvider.inject(expandedMacros)
+
+    return ParsedMacroExpandToken(listOf(macroName) + paramTokens, paramTokens)
 
 }
 
@@ -744,65 +758,98 @@ private fun ParserContext.defineDelay()
 private fun ParserContext.handleLoad(): ParsedToken {
     val load = tokenProvider.consume<Token.Load>()
     val reg = tokenProvider.peek()
-    if (reg is Token.Register) {
+    var register1 = if (reg is Token.Register) {
         tokenProvider.consume<Token.Register>()
-        if (tokenProvider.hasMore()) {
-            val next = tokenProvider.peek()
-            if (next is Token.Minus) {
-                tokenProvider.consume<Token.Minus>()
-                val reg2 = tokenProvider.peek()
-                if (reg2 is Token.Register) {
-                    tokenProvider.consume<Token.Register>()
-                    return (ParsedToken(ParsedTokenType.Load, listOf(load, reg, reg2)))
-                } else {
-                    tokenProvider.consume<Any>()
-                    val errorToken = Token.Error("Expected Register", reg2.line, reg2.column)
-                    return (ParsedToken(ParsedTokenType.Error, listOf(load, reg, errorToken)))
-                }
-            } else {
-                return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
-            }
+        reg.register
+    } else if (reg is Token.Identifier) {
+        tokenProvider.consume<Token.Identifier>()
+        if (reg.name in aliases.keys) {
+            Registers.entries[aliases[reg.name]!!.evaluate()]
         } else {
-            return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
+            val errorToken = Token.Error("Label ${reg.name} not defined", reg.line, reg.column)
+            return (ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
         }
     } else {
-        tokenProvider.consume<Any>()
-        val errorToken = Token.Error("Expected Register", reg.line, reg.column)
+        val errorToken = Token.Error("Expected Register or Label", reg.line, reg.column)
         return (ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
     }
+
+
+    if (tokenProvider.hasMore()) {
+        val next = tokenProvider.peek()
+        if (next is Token.Minus) {
+            val minus = tokenProvider.consume<Token.Minus>()
+            val reg2 = tokenProvider.peek()
+            var register2 = if (reg2 is Token.Register) {
+                tokenProvider.consume<Token.Register>()
+                reg2.register
+            } else if (reg2 is Token.Identifier) {
+                tokenProvider.consume<Token.Identifier>()
+                if (reg2.name in aliases.keys) {
+                    Registers.entries[aliases[reg2.name]!!.evaluate()]
+                } else {
+                    val errorToken = Token.Error("Label ${reg2.name} not defined", reg.line, reg.column)
+                    return (ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
+                }
+            } else {
+                val errorToken = Token.Error("Expected Register or Label", reg.line, reg.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(load, errorToken)))
+            }
+            return (ParsedToken(ParsedTokenType.Load, listOf(load, reg,minus, reg2)))
+
+        }
+        return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
+    }
+    return (ParsedToken(ParsedTokenType.Load, listOf(load, reg)))
 
 }
 
 private fun ParserContext.handleSave(): ParsedToken {
     val save = tokenProvider.consume<Token.Save>()
     val reg = tokenProvider.peek()
-    if (reg is Token.Register) {
+    var register1 = if (reg is Token.Register) {
         tokenProvider.consume<Token.Register>()
-        if (tokenProvider.hasMore()) {
-            val next = tokenProvider.peek()
-            if (next is Token.Minus) {
-                tokenProvider.consume<Token.Minus>()
-                val reg2 = tokenProvider.peek()
-                if (reg2 is Token.Register) {
-                    tokenProvider.consume<Token.Register>()
-                    return (ParsedToken(ParsedTokenType.Save, listOf(save, reg, reg2)))
-                } else {
-                    tokenProvider.consume<Any>()
-                    val errorToken = Token.Error("Expected Register", reg2.line, reg2.column)
-                    return (ParsedToken(ParsedTokenType.Error, listOf(save, reg, errorToken)))
-                }
-            } else {
-                return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
-            }
+        reg.register
+    } else if (reg is Token.Identifier) {
+        tokenProvider.consume<Token.Identifier>()
+        if (reg.name in aliases.keys) {
+            Registers.entries[aliases[reg.name]!!.evaluate()]
         } else {
-            return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
+            val errorToken = Token.Error("Label ${reg.name} not defined", reg.line, reg.column)
+            return (ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
         }
     } else {
-        tokenProvider.consume<Any>()
-        val errorToken = Token.Error("Expected Register", reg.line, reg.column)
+        val errorToken = Token.Error("Expected Register or Label", reg.line, reg.column)
         return (ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
     }
 
+
+    if (tokenProvider.hasMore()) {
+        val next = tokenProvider.peek()
+        if (next is Token.Minus) {
+            val minus = tokenProvider.consume<Token.Minus>()
+            val reg2 = tokenProvider.peek()
+            var register2 = if (reg2 is Token.Register) {
+                tokenProvider.consume<Token.Register>()
+                reg2.register
+            } else if (reg2 is Token.Identifier) {
+                tokenProvider.consume<Token.Identifier>()
+                if (reg2.name in aliases.keys) {
+                    Registers.entries[aliases[reg2.name]!!.evaluate()]
+                } else {
+                    val errorToken = Token.Error("Label ${reg2.name} not defined", reg.line, reg.column)
+                    return (ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
+                }
+            } else {
+                val errorToken = Token.Error("Expected Register or Label", reg.line, reg.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(save, errorToken)))
+            }
+            return (ParsedToken(ParsedTokenType.Save, listOf(save, reg, minus, reg2)))
+
+        }
+        return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
+    }
+    return (ParsedToken(ParsedTokenType.Save, listOf(save, reg)))
 }
 
 private fun ParserContext.handleBCD(): ParsedToken {
@@ -860,7 +907,7 @@ private fun ParserContext.handleAssert(): ParsedToken {
 }
 
 private fun ParserContext.handleOrg(): ParsedToken {
-    val pointer = tokenProvider.consume<Token.Pointer>()
+    val pointer = tokenProvider.consume<Token.Org>()
     when (val next = tokenProvider.peek()) {
         is Token.LBrace -> {
             val expression = consumeMacroBody()
@@ -941,6 +988,15 @@ private fun ParserContext.handleByte(): ParsedToken {
                 return (ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
             } else {
                 val error = Token.Error("Byte value out of range", next.line, next.column)
+                return (ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
+            }
+        }
+        is Token.Identifier -> {
+            tokenProvider.consume<Token.Identifier>()
+            if (next.name in constants) {
+                return (ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
+            } else {
+                val error = Token.Error("Constant value not found", next.line, next.column)
                 return (ParsedToken(ParsedTokenType.Error, listOf(byte, error)))
             }
         }
@@ -1026,7 +1082,7 @@ private fun ParserContext.defineMacro(): ParsedToken {
                     val toReturn = ParsedMacroToken(
                         buildList { add(macro); add(identifier); addAll(arguments); addAll(body) },
                         arguments,
-                        body
+                        body.subList(1, body.size - 1)
                     )
                     macros[identifier.name] = toReturn
                     return toReturn
@@ -1057,9 +1113,8 @@ private fun ParserContext.consumeMacroBody(): List<Token> {
     var token = tokenProvider.consume<Token.LBrace>()
     val toReturn = mutableListOf<Token>()
     var depth = 0
-
-
     toReturn.add(token)
+
     token = tokenProvider.consume<Any>()
 
 
@@ -1466,7 +1521,10 @@ private fun ParserContext.defined(label: String): Boolean {
             stringModes.containsKey(label) || mutables.containsKey(label)
 }
 
-class TokenProvider(val program: List<Token>) {
+class TokenProvider(val programIn: List<Token>) {
+
+    val program = programIn.toMutableList()
+
     var index = 0
 
     init {
@@ -1480,6 +1538,10 @@ class TokenProvider(val program: List<Token>) {
             return Token.Error("Unexpected end of program", program.last().line, program.last().column)
         }
         return program[index]
+    }
+
+    fun inject(tokens: List<Token>) {
+        program.addAll(index, tokens)
     }
 
     fun hasMore(): Boolean {
