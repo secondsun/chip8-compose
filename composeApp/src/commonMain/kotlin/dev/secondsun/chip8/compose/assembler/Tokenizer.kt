@@ -244,7 +244,7 @@ fun tokenize(program: String): List<Token> {
                 if (numberString.length > 1) {
                     val secondDigit = numberString[1]
                     if (secondDigit.isDigit()) {
-                        tokens.add(Token.Number(sign * parseInt(numberString, 8), line, startColumn))
+                        tokens.add(Token.Number(sign * parseInt(numberString, 10), line, startColumn))
                     } else {
                         when (secondDigit) {
                             'x' -> tokens.add(
@@ -274,6 +274,7 @@ fun tokenize(program: String): List<Token> {
                 tokens.add(Token.Number(sign * parseInt(numberString), line, startColumn))
             }
         } catch (e: NumberFormatException) {
+e.printStackTrace()
             throw IllegalStateException("Unexpected number format $numberString at $startLine:$startColumn")
         }
 

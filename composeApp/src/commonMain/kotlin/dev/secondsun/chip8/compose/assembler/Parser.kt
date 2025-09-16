@@ -148,7 +148,9 @@ private fun ParserContext.parseOne(): ParsedToken {
                 macroExpand()
             } else if (aliases.containsKey(name)) {
                 consumeAssign()
-            } else {
+            } else if (stringModes.containsKey(name)) {
+                consumeStringMode()
+            }else {
                 consumeCall()
             }
         }
@@ -212,6 +214,25 @@ private fun ParserContext.parseOne(): ParsedToken {
     }
 }
 
+private fun ParserContext.consumeStringMode(): ParsedToken {
+    val token = tokenProvider.consume<Token.Identifier>() as Token.Identifier
+    val string = tokenProvider.consume<Token.StringToken>()
+    if (string !is Token.StringToken) {
+        val errorToken = Token.Error("Expected String Token", string.line, string.column)
+        return (ParsedToken(ParsedTokenType.Error, listOf(token, errorToken)))
+    }
+    val stringMode = stringModes.get(token.name)
+
+    if (stringMode == null) {
+        val errorToken = Token.Error("Unknown string mode ${token.name}", token.line, token.column)
+        return (ParsedToken(ParsedTokenType.Error, listOf(token)))
+    }
+
+    val output = stringMode.evaluate(string.value)
+    tokenProvider.inject(output)
+    return (ParsedToken(ParsedTokenType.StringMode, listOf(token)))
+}
+
 private fun ParserContext.consumeIAssign(): ParsedToken {
     val i = tokenProvider.consume<Token>()
     val operator = tokenProvider.consume<Any>()
@@ -219,16 +240,6 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
         when (val next = tokenProvider.peek()) {
             is Token.Identifier -> {
                 when (next.name) {
-                    "hex", "bighex" -> {
-                        tokenProvider.consume<Token.Identifier>()
-                        val register = tokenProvider.consume<Any>()
-                        if (isRegister(register)) {
-                            return ParsedToken(ParsedTokenType.IAssign, listOf(i, operator, next, register))
-                        } else {
-                            val errorToken = Token.Error("Expected Register", register.line, register.column)
-                            return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
-                        }
-                    }
 
                     "long" -> {
                         tokenProvider.consume<Token.Identifier>()
@@ -240,7 +251,16 @@ private fun ParserContext.consumeIAssign(): ParsedToken {
                     }
                 }
             }
-
+            is Token.Hex,is Token.BigHex -> {
+                tokenProvider.consume<Any>()
+                val register = tokenProvider.consume<Any>()
+                if (isRegister(register)) {
+                    return ParsedToken(ParsedTokenType.IAssign, listOf(i, operator, next, register))
+                } else {
+                    val errorToken = Token.Error("Expected Register", register.line, register.column)
+                    return ParsedToken(ParsedTokenType.Error, listOf(i, operator, next, errorToken))
+                }
+            }
             is Token.Number -> {
                 tokenProvider.consume<Token.Number>()
                 return ParsedToken(ParsedTokenType.IAssign, listOf(i, operator, next))
@@ -916,7 +936,7 @@ private fun ParserContext.handleOrg(): ParsedToken {
 
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
-            if (next.value !in 0..0xFFFF) {
+            if (next.value in 0..0xFFFF) {
                 return (ParsedToken(ParsedTokenType.Org, listOf(pointer, next)))
             } else {
                 val error = Token.Error("Wide value out of range", next.line, next.column)
@@ -952,7 +972,7 @@ private fun ParserContext.handlePointer(): ParsedToken {
 
         is Token.Number -> {
             tokenProvider.consume<Token.Number>()
-            if (next.value !in 0..0xFFFF) {
+            if (next.value in 0..0xFFFF) {
                 return (ParsedToken(ParsedTokenType.Pointer, listOf(pointer, next)))
             } else {
                 val error = Token.Error("Wide value out of range", next.line, next.column)
@@ -1023,7 +1043,7 @@ private fun ParserContext.defineStringMode(): ParsedToken {
                     val stmName = stringModeName.name
 
                     val mode = stringModes.computeIfAbsent(stmName) { StringMode(stmName) }
-                    mode.addAlphabet(stringModeAlphabet.value, stringModeBody)
+                    mode.addAlphabet(stringModeAlphabet.value, stringModeBody.subList(1, stringModeBody.size - 1))
                     return (ParsedToken(
                         ParsedTokenType.StringMode,
                         buildList { add(stringMode); add(stringModeName); add(stringModeAlphabet); addAll(stringModeBody) }))
