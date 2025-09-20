@@ -588,6 +588,7 @@ private fun ParserContext.consumeAssign(): ParsedToken {
         is Token.AdditionAssignment,
         is Token.ShiftLeftAssign,
         is Token.ShiftRightAssign,
+        is Token.ReverseSubtractionAssignment,
         is Token.SubtractionAssignment -> {
             val parameter = tokenProvider.consume<Any>()
             if (parameter is Token.Identifier) {

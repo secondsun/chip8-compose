@@ -2,9 +2,6 @@ package dev.secondsun.chip8.compose.assembler
 
 import java.lang.Character.isWhitespace
 import java.lang.Integer.parseInt
-import java.util.Locale
-import kotlin.text.compareTo
-import kotlin.text.get
 
 
 fun tokenize(program: String): List<Token> {
@@ -280,8 +277,7 @@ e.printStackTrace()
 
     }
 
-    fun consumeIdentifierOrDirectiveOrRegister() {
-        val startColumn = column
+    fun consumeIdentifierTokens(): String  {
         val identifierBuilder = StringBuilder()
         var character = getCharacter()
         while (!character.isWhitespace()) {
@@ -293,8 +289,14 @@ e.printStackTrace()
             character = getCharacter()
         }
 
-        val identifier = identifierBuilder.toString()
+        return  identifierBuilder.toString()
 
+    }
+
+
+    fun consumeIdentifierOrDirectiveOrRegister() {
+        val startColumn = column
+        val identifier = consumeIdentifierTokens();
         if (REGISTERS.contains(identifier.lowercase())) {
             tokens.add(Token.makeRegister(identifier, line, startColumn))
         } else if (DIRECTIVES.contains(identifier)) {
@@ -419,6 +421,7 @@ e.printStackTrace()
     }
 
 
+
     fun consumeExclaimation() {
         val startColumn = column
         tokens.add(Token.Exclaimation(line, startColumn))
@@ -490,6 +493,10 @@ e.printStackTrace()
             '=' -> if (nextCharacter == '=') {
                 tokens.add(Token.Equal(line, startColumn))
                 nextCharacter()
+            } else if (nextCharacter == '-') {
+                val startColumn = column
+                tokens.add(Token.ReverseSubtractionAssignment(line, startColumn))
+                nextCharacter();
             } else {
                 consumeErrorToken()
             }
@@ -640,6 +647,12 @@ e.printStackTrace()
                 consumeNumber()
             } else if (next.startsWith("=")) {
                 consumeAddSubAssignment()
+            } else {
+                //plus and minus are allowed to be identifiers
+                val startColumn = column;
+                val identifier = consumeIdentifierTokens()
+                tokens.add(Token.Identifier(identifier, line, startColumn));
+
             }
         } else if (character == '|' || character == '&' || character == '^') {
             val next = peekNextWord()
@@ -689,6 +702,7 @@ e.printStackTrace()
 
 
 }
+
 
 
 fun isNewline(character: Char): Boolean {

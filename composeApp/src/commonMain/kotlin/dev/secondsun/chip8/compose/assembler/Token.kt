@@ -395,6 +395,11 @@ sealed interface Token {
             get() = TokenType.SubtractionAssignment
     }
 
+    data class ReverseSubtractionAssignment(override val line: Int, override val column: Int) : Token {
+        override val type: TokenType
+            get() = TokenType.ReverseSubtractionAssignment
+    }
+
 
     data class AdditionAssignment(override val line: Int, override val column: Int) : Token {
         override val type: TokenType
@@ -647,6 +652,7 @@ enum class TokenType {
     Exclaimation,
     Caret,
     Percent,
-    ForwardIdentifier
+    ForwardIdentifier,
+    ReverseSubtractionAssignment
 
 }

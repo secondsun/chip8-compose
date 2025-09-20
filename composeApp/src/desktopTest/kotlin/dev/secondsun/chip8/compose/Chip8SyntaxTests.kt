@@ -518,11 +518,6 @@ class Chip8SyntaxTests {
     }
 
     @Test
-    fun `test many more things`() {
-        TODO("Test scrolls, test planes, test iAssign, test raw number tokens become data in the parsing...")
-    }
-
-    @Test
     fun `parse macros`() {
         val program = """
             :macro foo SIZE {
@@ -585,7 +580,8 @@ class Chip8SyntaxTests {
     @Test
     fun `big files should parse without errors`() {
 
-            val programUri = URI.create(Res.getUri("files/big.8o"))
+            val programUri = URI.create(Res.getUri("files/examples/xomusicplayer.8o"))
+            println("Parsing xomusicplayer...")
             val program = Paths.get(programUri).toFile().readText()
             val tokens = parse(program)
             tokens.parsedTokens.filter {it.type == ParsedTokenType.Error}.forEach { println(it); println(it.tokens.joinToString(" ") { it.toString()})}
