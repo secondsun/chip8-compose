@@ -55,6 +55,7 @@
 <div id="container"></div>
 
 <script src="package/min/vs/loader.js"></script>
+<script src="util.js"></script>
 
 <script>
 
@@ -64,10 +65,27 @@
     var editorView;
     var contentChangeListener;
     var scrollChangeListener;
-
+    var timeoutId = null;
     require.config({ paths: { 'vs': './package/min/vs' } });
 
     require(['vs/editor/editor.main'], function () {
+
+    monaco.editor.onDidCreateModel(model => {
+
+        //Enable Change Observer
+        model.onDidChangeContent(function () {
+            window.clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+              console.log("Monaco Content Changed Bridge Called");
+                window.nachosBridge.callNative("MonacoContentChanged",JSON.stringify({program:editorView.getModel().getLinesContent().join("\n")}),
+                function (data) {
+                    console.log("Monaco Content Changed");
+                });
+            }, 250);
+
+        });
+
+    });
 
     monaco.editor.onDidCreateEditor(editor=>{
 

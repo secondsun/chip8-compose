@@ -1,37 +1,23 @@
 package dev.secondsun.chip8.compose.editor
 
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
-import chip8_compose.composeapp.generated.resources.Res
-import chip8_compose.composeapp.generated.resources.logo
 import com.google.dynamiccolor.DynamicScheme
 import com.multiplatform.webview.jsbridge.WebViewJsBridge
-import com.multiplatform.webview.jsbridge.rememberWebViewJsBridge
 import com.multiplatform.webview.util.KLogSeverity
 import com.multiplatform.webview.web.WebView
-import com.multiplatform.webview.web.WebViewState
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import dev.secondsun.chip8.compose.editor.state.CodeEditorViewModel
 import dev.secondsun.chip8.compose.editor.state.FileType
+import dev.secondsun.chip8.compose.editor.webview.MonacoContentChangedMessageHandler
 import dev.secondsun.chip8.compose.editor.webview.MonacoInitMessageHandler
 import dev.secondsun.chip8.compose.emulator.Chip8EmulatorCanvas
 import dev.secondsun.chip8.compose.emulator.state.Chip8EmulatorViewModel
@@ -40,7 +26,6 @@ import dev.secondsun.chip8.compose.localproviders.LocalKCEF
 import dev.secondsun.chip8.compose.theme.toMaterialScheme
 import dev.secondsun.chip8.util.Chip8Utils
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 
 
 /**
@@ -54,6 +39,7 @@ import org.jetbrains.compose.resources.painterResource
  * instead of using a file:// resource.
  */
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NachosMain(port: Int, scheme: DynamicScheme) {
     MaterialTheme(colorScheme = scheme.toMaterialScheme()) {
@@ -120,6 +106,7 @@ private fun NachosAppContent(
     webViewState.webSettings.apply {
         logSeverity = KLogSeverity.Debug
     }
+
     val jsBridge = WebViewJsBridge(webViewNavigator, "nachosBridge")
 
         jsBridge.register(
@@ -129,6 +116,9 @@ private fun NachosAppContent(
                 provideTheme = { isDarkMode })
         )
 
+        jsBridge.register(
+            MonacoContentChangedMessageHandler()
+        )
 
     // Update dark mode when it changes
     LaunchedEffect(isDarkMode) {
