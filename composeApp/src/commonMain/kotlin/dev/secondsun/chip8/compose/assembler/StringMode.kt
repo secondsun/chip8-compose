@@ -36,7 +36,7 @@ class StringMode(val name: String) {
                 when (val chunk = body[x]) {
                     is Token.Identifier -> {
                         if (bindings.containsKey(chunk.name)) {
-                            toReturn.add(Token.Number(bindings[chunk.name]!!, 0, 0))
+                            toReturn.add(Token.Number(bindings[chunk.name]!!, 0, 0,1))
                         } else {
                             toReturn.add(chunk)
                         }

@@ -5,9 +5,11 @@ import com.multiplatform.webview.jsbridge.JsMessage
 import com.multiplatform.webview.jsbridge.dataToJsonString
 import com.multiplatform.webview.jsbridge.processParams
 import com.multiplatform.webview.web.WebViewNavigator
+import dev.secondsun.chip8.compose.assembler.ParsedTokenType
+import dev.secondsun.chip8.compose.assembler.Token
 import dev.secondsun.chip8.compose.assembler.parse
-import dev.secondsun.chip8.compose.editor.state.FileType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
 
 /**
  * When Monaco starts up, it will call this handler to get the
@@ -24,21 +26,28 @@ class MonacoContentChangedMessageHandler() : IJsMessageHandler {
         navigator: WebViewNavigator?,
         callback: (String) -> Unit
     ) {
-        println("Change Message handle")
-        println(message);
-        val program = processParams<MonacoContentChangedMessage>(message);
-        val parsedProgram = parse(program.program);
-
-        val data = MonacoContentChangeResult()
-        val jsonString = dataToJsonString(data)
-        callback(jsonString)    }
+        val program = processParams<MonacoContentChangedMessage>(message)
+        val parsedProgram = parse(program.program)
+        val errors = parsedProgram.parsedTokens.filter { it.type == ParsedTokenType.Error }
+            .flatMap { it.tokens }
+            .filterIsInstance<Token.Error>()
+            .map { errorToken ->
+                    TokenError(errorToken.line, errorToken.column, errorToken.length, errorToken.message)
+            }
+            .toList()
+        println(errors)
+        //val data = MonacoContentChangeResult(dataToJsonString(errors))
+        val jsonString = dataToJsonString(errors)
+        callback(jsonString)
+    }
 
 }
 
 @Serializable
-data class MonacoContentChangeResult(val message : String = "OK") {
+data class TokenError(val line: Int, val column: Int, val length: Int, val message: String)
 
-}
+@Serializable
+data class MonacoContentChangeResult(val message: String = "OK")
 
 @Serializable
 data class MonacoContentChangedMessage(

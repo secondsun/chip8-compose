@@ -2,6 +2,7 @@ package dev.secondsun.chip8.compose.assembler
 
 import java.lang.Character.isWhitespace
 import java.lang.Integer.parseInt
+import kotlin.math.max
 
 
 fun tokenize(program: String): List<Token> {
@@ -128,7 +129,7 @@ fun tokenize(program: String): List<Token> {
         if (string == "-key") {
             tokens.add(Token.MinusKey(line, startColumn))
         } else {
-            tokens.add(Token.Error("Unexpected token $string at $line, $startColumn", line, startColumn))
+            tokens.add(Token.Error("Unexpected token $string at $line, $startColumn", line, startColumn, string.length))
         }
 
     }
@@ -144,7 +145,7 @@ fun tokenize(program: String): List<Token> {
         } else if (character == '-') {
             tokens.add(Token.Minus(line, startColumn))
         } else {
-            tokens.add(Token.Error("Unexpected token $character at $line, $startColumn", line, startColumn))
+            tokens.add(Token.Error("Unexpected token $character at $line, $startColumn", line, startColumn, 1))
         }
 
     }
@@ -158,7 +159,7 @@ fun tokenize(program: String): List<Token> {
         nextCharacter()
 
         if (!canContinue()) {
-            tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+            tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn, max(1,column-startColumn)))
             return
         }
 
@@ -170,7 +171,7 @@ fun tokenize(program: String): List<Token> {
                 '\\' -> {
                     nextCharacter()
                     if (!canContinue()) {
-                        tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+                        tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn,max(1,column-startColumn)))
                         return
                     }
                     val esc = getCharacter()
@@ -185,7 +186,7 @@ fun tokenize(program: String): List<Token> {
                         else -> {
                             tokens.add(
                                 Token.Error(
-                                    "Invalid escape character '$esc' in string literal at $startLine, $startColumn",line, column
+                                    "Invalid escape character '$esc' in string literal at $startLine, $startColumn",line, column,1
                                 )
                             )
                         }
@@ -196,7 +197,7 @@ fun tokenize(program: String): List<Token> {
 
             nextCharacter()
             if (!canContinue()) {
-                tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn))
+                tokens.add(Token.Error("Unterminated string literal at $startLine, $startColumn", line, startColumn,max(1,column-startColumn)))
                 return
             }
         }
@@ -241,7 +242,7 @@ fun tokenize(program: String): List<Token> {
                 if (numberString.length > 1) {
                     val secondDigit = numberString[1]
                     if (secondDigit.isDigit()) {
-                        tokens.add(Token.Number(sign * parseInt(numberString, 10), line, startColumn))
+                        tokens.add(Token.Number(sign * parseInt(numberString, 10), line, startColumn, numberString.length ))
                     } else {
                         when (secondDigit) {
                             'x' -> tokens.add(
@@ -249,6 +250,7 @@ fun tokenize(program: String): List<Token> {
                                     sign * parseInt(numberString.substring(2), 16),
                                     line,
                                     startColumn
+                                    , numberString.length
                                 )
                             )
 
@@ -256,7 +258,7 @@ fun tokenize(program: String): List<Token> {
                                 Token.Number(
                                     sign * parseInt(numberString.substring(2), 2),
                                     line,
-                                    startColumn
+                                    startColumn, numberString.length
                                 )
                             )
 
@@ -265,10 +267,10 @@ fun tokenize(program: String): List<Token> {
                         }
                     }
                 } else {//Number is exactly zero
-                    tokens.add(Token.Number(0, line, startColumn))
+                    tokens.add(Token.Number(0, line, startColumn,numberString.length))
                 }
             } else {
-                tokens.add(Token.Number(sign * parseInt(numberString), line, startColumn))
+                tokens.add(Token.Number(sign * parseInt(numberString), line, startColumn, numberString.length))
             }
         } catch (e: NumberFormatException) {
 e.printStackTrace()
@@ -326,7 +328,8 @@ e.printStackTrace()
             Token.Error(
                 "Unidentified token ${unidentifierTokenBuilder.toString()} at $line, $startColumn",
                 line,
-                startColumn
+                startColumn,
+                unidentifierTokenBuilder.length
             )
         )
     }
@@ -348,7 +351,8 @@ e.printStackTrace()
                 Token.Error(
                     "Unexpected token $character$nextCharacter at $line, $startColumn",
                     line,
-                    startColumn
+                    startColumn,
+                    2
                 )
             )
         }
@@ -370,7 +374,7 @@ e.printStackTrace()
                 Token.Error(
                     "Unexpected token $character$nextCharacter at $line, $startColumn",
                     line,
-                    startColumn
+                    startColumn,2
                 )
             )
         }
@@ -528,7 +532,7 @@ e.printStackTrace()
                 Token.Error(
                     "Unexpected end of file after $character at $line, $startColumn",
                     line,
-                    startColumn
+                    startColumn,1
                 )
             )
         }
@@ -565,7 +569,7 @@ e.printStackTrace()
                 Token.Error(
                     "Unexpected token $character$nextCharacter at $line, $startColumn",
                     line,
-                    startColumn
+                    startColumn,2
                 )
             )
         }

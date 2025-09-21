@@ -76,10 +76,27 @@
         model.onDidChangeContent(function () {
             window.clearTimeout(timeoutId);
             timeoutId = window.setTimeout(() => {
-              console.log("Monaco Content Changed Bridge Called");
                 window.nachosBridge.callNative("MonacoContentChanged",JSON.stringify({program:editorView.getModel().getLinesContent().join("\n")}),
                 function (data) {
-                    console.log("Monaco Content Changed");
+                    const markers = []
+                    data = JSON.parse(data);
+                    for(var element in data) {
+                       var errorToken = data[element];
+                       var markerLineNumber = errorToken.lineNumber + 1;
+                       var markerColumnNumber = errorToken.column + 1;
+                       var markerLength = errorToken.length;
+
+                       var marker = {
+                           startLineNumber: markerLineNumber,
+                           startColumn: markerColumnNumber,
+                           endLineNumber: markerLineNumber,
+                           endColumn: markerColumnNumber+markerLength,
+                           message: errorToken.message,
+                           severity: monaco.MarkerSeverity.Error
+                       };
+                       markers.push(marker);
+                    }
+                    monaco.editor.setModelMarkers(editorView.getModel(), "owner", markers);
                 });
             }, 250);
 
@@ -89,19 +106,17 @@
 
     monaco.editor.onDidCreateEditor(editor=>{
 
-        console.log("Monaco Init");
+
         setTimeout(() => {
             window.nachosBridge.callNative("MonacoInit",JSON.stringify({}),
               function (data) {
-                   console.log("Monaco Init Done", typeof data);
                    try {
                         data = JSON.parse(data);
                         try {
                             updateText(data.fileContent, data.readOnly == "BINARY");
-                            console.log("Setting Dark Mode", data.darkMode);
                             setDarkMode(data.darkMode == true);
                         } catch (e) {
-                            console.log("Error updating text or setting dark mode", data, e);
+
                         }
                     } catch (e) {
                         console.log("Error parsing data", e);
@@ -206,7 +221,7 @@
         var isDarkMode = false
         var theme = isDarkMode ? "octoTheme-dark" : "octoTheme-light";
 
-        console.log(theme);
+
 
         // Define a new theme that contains only rules that match this language
         monaco.editor.defineTheme("octoTheme-dark", {

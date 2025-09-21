@@ -57,6 +57,7 @@ kotlin {
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.compose.components.splitpane)
+            implementation(libs.json.serialization)
             implementation(project(":material-color-utils"))
             implementation(project(":chip8"))
 

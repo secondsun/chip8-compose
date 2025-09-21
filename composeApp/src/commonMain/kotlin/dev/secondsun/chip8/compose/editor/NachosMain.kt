@@ -104,7 +104,7 @@ private fun NachosAppContent(
     val webViewState = rememberWebViewState(baseUrl)
     val webViewNavigator = rememberWebViewNavigator()
     webViewState.webSettings.apply {
-        logSeverity = KLogSeverity.Debug
+        logSeverity = KLogSeverity.Error
     }
 
     val jsBridge = WebViewJsBridge(webViewNavigator, "nachosBridge")
