@@ -38,7 +38,7 @@ class Chip8SyntaxTests {
         val tokens = parsed.parsedTokens
 
         assertTrue(tokens[0].tokens[1] is Token.Identifier)
-        assertTrue(tokens[1].tokens[1] is Token.Register)
+        assertTrue(tokens[1].tokens[1] is Token.Identifier)
         assertTrue(tokens[2].tokens[1] is Token.Identifier)
 
 
@@ -162,11 +162,11 @@ class Chip8SyntaxTests {
         assertEquals(3, conditionalTokens.size)
         assertEquals(3, bodyTokens.size)
 
-        assertTrue(conditionalTokens[0] is Token.Register)
+        assertTrue(conditionalTokens[0] is Token.Identifier)
         assertTrue(conditionalTokens[1] is Token.Equal)
         assertTrue(conditionalTokens[2] is Token.Number)
 
-        assertTrue(bodyTokens[0] is Token.Register)
+        assertTrue(bodyTokens[0] is Token.Identifier)
         assertTrue(bodyTokens[1] is Token.AdditionAssignment)
         assertTrue(bodyTokens[2] is Token.Number)
 
@@ -431,10 +431,10 @@ class Chip8SyntaxTests {
         val tokens = parsed.parsedTokens
 
         assertEquals(6, tokens.size)
-        assertTrue(tokens[0].tokens[2] is Token.Register)
+        assertTrue(tokens[0].tokens[2] is Token.Identifier)
         assertEquals(ParsedTokenType.Alias, tokens[0].type)
 
-        assertTrue(tokens[1].tokens[2] is Token.Register)
+        assertTrue(tokens[1].tokens[2] is Token.Identifier)
         assertTrue(tokens[2].tokens[2] is Token.LBrace)
         assertEquals(ParsedTokenType.Error, tokens[3].type)
         assertEquals(ParsedTokenType.Error, tokens[4].type)

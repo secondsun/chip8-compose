@@ -52,14 +52,14 @@ sealed interface Token {
             return "Error \"$message\" ${line}:${column}"
         }
     }
-
-    data class Register(val register: Registers, override val line: Int, override val column: Int) : Token {
-        override val type: TokenType
-            get() = TokenType.Register
-
-        override val length: Int
-            get() = if (register == Registers.i) 1 else 2
-    }
+//
+//    data class Register(val register: Registers, override val line: Int, override val column: Int) : Token {
+//        override val type: TokenType
+//            get() = TokenType.Register
+//
+//        override val length: Int
+//            get() = if (register == Registers.i) 1 else 2
+//    }
 
 
     data class Multiply(override val line: Int, override val column: Int) : Token {
@@ -428,13 +428,13 @@ sealed interface Token {
             get() = 9
     }
 
-    data class I(override val line: Int, override val column: Int) : Token {
-        override val type: TokenType
-            get() = TokenType.I
-
-        override val length: Int
-            get() = 1
-    }
+//    data class I(override val line: Int, override val column: Int) : Token {
+//        override val type: TokenType
+//            get() = TokenType.I
+//
+//        override val length: Int
+//            get() = 1
+//    }
 
     data class Audio(override val line: Int, override val column: Int) : Token {
         override val type: TokenType
@@ -771,7 +771,7 @@ sealed interface Token {
                 "hires" -> return Hires(line, startColumn)
                 "loadflags" -> return LoadFlags(line, startColumn)
                 "saveflags" -> return SaveFlags(line, startColumn)
-                "i" -> return I(line, startColumn)
+//                "i" -> return I(line, startColumn)
                 "audio" -> return Audio(line, startColumn)
                 "pitch" -> return Pitch(line, startColumn)
                 "plane" -> return Plane(line, startColumn)
@@ -795,9 +795,9 @@ sealed interface Token {
             }
         }
 
-        fun makeRegister(identifier: String, line: Int, startColumn: Int): Token {
-            return Register(Registers.valueOf(identifier.lowercase()), line, startColumn)
-        }
+//        fun makeRegister(identifier: String, line: Int, startColumn: Int): Token {
+//            return Register(Registers.valueOf(identifier.lowercase()), line, startColumn)
+//        }
     }
 }
 
@@ -809,7 +809,7 @@ enum class TokenType {
     Number,
     Error,
 
-    Register,
+    //Register,
     Multiply,
     BinaryOr,
     BinaryAnd,
@@ -854,7 +854,7 @@ enum class TokenType {
     Hires,
     LoadFlags,
     SaveFlags,
-    I,
+    //I,
     Audio,
     Pitch,
     Plane,

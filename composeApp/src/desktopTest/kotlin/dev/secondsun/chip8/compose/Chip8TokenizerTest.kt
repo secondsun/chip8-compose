@@ -129,6 +129,15 @@ class Chip8TokenizerTest {
 
     }
 
+
+    @Test
+    fun `chicken_8o has a period as a label`() {
+        val programUri = URI.create(Res.getUri("files/examples/chicken.8o"))
+        val program = Paths.get(programUri).toFile().readText()
+        val tokens = tokenize(program)
+        //assertEquals(10, tokens.size)
+        assertTrue { tokens.none { it is Token.Error } }
+    }
     /**
      * A semicolon (;) is another way to write return, which returns from a subroutine.
      */
@@ -220,52 +229,56 @@ class Chip8TokenizerTest {
 
 
     /**
+     * Commented out because I'm testing removing register tokens during lexing.
+     * They will be moved to syntax parsing
+     *
      * Chip-8 has 16 general-purpose 8-bit registers named v0 to vF. vF is the “flag” register”,
      * and some operations will modify it as a side effect. i is the memory index register and
      * is used when reading and writing memory via load, save and bcd, and also provides the
      * address of the graphics data drawn by sprite.
+     *
      */
-    @Test
-    fun testRegisters() {
-        val program = """
-            : main
-            v1 := 0x82
-            v2 := 0b10101010
-            v0 := 42
-            vA := -42
-            vF := +0x87
-            i := bighex vx
-        """.trimIndent()
-        val tokens = tokenize(program)
-        assertEquals(21, tokens.size)
-        val v1RegisterToken = tokens[2]
-        assertTrue { v1RegisterToken is Token.Register }
-        assertEquals(Registers.v1, (v1RegisterToken as Token.Register).register)
-
-        val v2RegisterToken = tokens[5]
-        assertTrue { v2RegisterToken is Token.Register }
-        assertEquals(Registers.v2, (v2RegisterToken as Token.Register).register)
-
-        val v0RegisterToken = tokens[8]
-        assertTrue { v0RegisterToken is Token.Register }
-        assertEquals(Registers.v0, (v0RegisterToken as Token.Register).register)
-
-        val vARegisterToken = tokens[11]
-        assertTrue { vARegisterToken is Token.Register }
-        assertEquals(Registers.va, (vARegisterToken as Token.Register).register)
-
-        val vFRegisterToken = tokens[14]
-        assertTrue { vFRegisterToken is Token.Register }
-        assertEquals(Registers.vf, (vFRegisterToken as Token.Register).register)
-
-        val iRegisterToken = tokens[17]
-        assertTrue { iRegisterToken is Token.Register }
-        assertEquals(Registers.i, (iRegisterToken as Token.Register).register)
-
-        val bighexToken = tokens[19]
-        assertTrue { bighexToken is Token.BigHex }
-
-    }
+//    @Test
+//    fun testRegisters() {
+//        val program = """
+//            : main
+//            v1 := 0x82
+//            v2 := 0b10101010
+//            v0 := 42
+//            vA := -42
+//            vF := +0x87
+//            i := bighex vx
+//        """.trimIndent()
+//        val tokens = tokenize(program)
+//        assertEquals(21, tokens.size)
+//        val v1RegisterToken = tokens[2]
+//        assertTrue { v1RegisterToken is Token.Register }
+//        assertEquals(Registers.v1, (v1RegisterToken as Token.Register).register)
+//
+//        val v2RegisterToken = tokens[5]
+//        assertTrue { v2RegisterToken is Token.Register }
+//        assertEquals(Registers.v2, (v2RegisterToken as Token.Register).register)
+//
+//        val v0RegisterToken = tokens[8]
+//        assertTrue { v0RegisterToken is Token.Register }
+//        assertEquals(Registers.v0, (v0RegisterToken as Token.Register).register)
+//
+//        val vARegisterToken = tokens[11]
+//        assertTrue { vARegisterToken is Token.Register }
+//        assertEquals(Registers.va, (vARegisterToken as Token.Register).register)
+//
+//        val vFRegisterToken = tokens[14]
+//        assertTrue { vFRegisterToken is Token.Register }
+//        assertEquals(Registers.vf, (vFRegisterToken as Token.Register).register)
+//
+//        val iRegisterToken = tokens[17]
+//        assertTrue { iRegisterToken is Token.Register }
+//        assertEquals(Registers.i, (iRegisterToken as Token.Register).register)
+//
+//        val bighexToken = tokens[19]
+//        assertTrue { bighexToken is Token.BigHex }
+//
+//    }
 
     /**
      *  a constant expression 0-15 enclosed in curly braces ({ ... }).

@@ -299,9 +299,10 @@ e.printStackTrace()
     fun consumeIdentifierOrDirectiveOrRegister() {
         val startColumn = column
         val identifier = consumeIdentifierTokens();
-        if (REGISTERS.contains(identifier.lowercase())) {
-            tokens.add(Token.makeRegister(identifier, line, startColumn))
-        } else if (DIRECTIVES.contains(identifier)) {
+//        if (REGISTERS.contains(identifier.lowercase())) {
+//            tokens.add(Token.makeRegister(identifier, line, startColumn))
+//        } else
+        if (DIRECTIVES.contains(identifier)) {
             tokens.add(Token.makeDirective(identifier, line, startColumn))
         } else if (identifier == "exit") {
             tokens.add(Token.Exit( line, startColumn))
@@ -697,7 +698,9 @@ e.printStackTrace()
         } else if (character == '{' || character == '}') {
             consumeBrace()
         } else {
-            consumeErrorToken()
+            val startColumn = column;
+            val identifier = consumeIdentifierTokens()
+            tokens.add(Token.Identifier(identifier, line, startColumn));
         }
 
     }

@@ -15,8 +15,13 @@ data class IntExpression(val expression: List<Token>) {
             val token = expression[0]
             when(token) {
                 is Token.Number -> return token.value
-                is Token.Identifier -> {TODO()}
-                is Token.Register -> return token.register.ordinal
+                is Token.Identifier -> {
+                    if (REGISTERS.contains(token.name.lowercase())) {
+                        return Registers.valueOf(token.name.lowercase()).ordinal
+                    } else {
+                        TODO()
+                    }
+                }
                 else -> {}
             }
         }
@@ -72,9 +77,9 @@ data class IntExpression(val expression: List<Token>) {
                 inExpression.removeFirst();
                 TODO("Implement Identifier resolution")
             }
-        } else if (first is Token.Register) {
+        } else if (first is Token.Identifier && REGISTERS.contains(first.name.lowercase())) {
             inExpression.removeFirst();
-            return first.register.ordinal.toDouble()
+            return Registers.valueOf(first.name.lowercase()).ordinal.toDouble()
         } else if (first is Token.Number) {
             inExpression.removeFirst();
             return first.value.toDouble()
