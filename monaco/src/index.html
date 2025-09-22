@@ -78,14 +78,14 @@
             timeoutId = window.setTimeout(() => {
                 window.nachosBridge.callNative("MonacoContentChanged",JSON.stringify({program:editorView.getModel().getLinesContent().join("\n")}),
                 function (data) {
-                    const markers = []
+                    var markers = []
                     data = JSON.parse(data);
                     for(var element in data) {
                        var errorToken = data[element];
-                       var markerLineNumber = errorToken.lineNumber + 1;
+                       var markerLineNumber = errorToken.line + 1;
                        var markerColumnNumber = errorToken.column + 1;
                        var markerLength = errorToken.length;
-
+                        console.log("token", JSON.stringify(data[element]));
                        var marker = {
                            startLineNumber: markerLineNumber,
                            startColumn: markerColumnNumber,
@@ -94,6 +94,7 @@
                            message: errorToken.message,
                            severity: monaco.MarkerSeverity.Error
                        };
+                       console.log("marker", JSON.stringify(marker));
                        markers.push(marker);
                     }
                     monaco.editor.setModelMarkers(editorView.getModel(), "owner", markers);

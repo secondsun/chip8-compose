@@ -73,6 +73,7 @@ private fun ParserContext.parseTokens() {
             parsedTokens.add(parseOne())
         }
     }
+
     for (key in forwards.keys) {
         if (!defined(key)) {
             forwards[key]!!.forEach {

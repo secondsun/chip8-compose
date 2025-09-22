@@ -611,6 +611,20 @@ class Chip8SyntaxTests {
     }
 
     @Test
+    fun `report error when missing forward declarations`() {
+        val program = """
+            :alias counter forward
+            : backward
+            0x42
+        """.trimIndent()
+        val parsed = parse(program)
+        val error = parsed.parsedTokens.first { it.type == ParsedTokenType.Error }
+        assertNotNull(error)
+        assertEquals(1, error.tokens.size)
+    }
+
+
+    @Test
     fun `define OCTO constants`() {
         val program = """
             vf := OCTO_KEY_E
