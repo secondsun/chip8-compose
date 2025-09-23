@@ -1051,7 +1051,7 @@ private fun ParserContext.handleByte(): ParsedToken {
 
         is Token.Identifier -> {
             tokenProvider.consume<Token.Identifier>()
-            if (next.name in constants) {
+            if (defined(next.name)) {
                 return (ParsedToken(ParsedTokenType.Byte, listOf(byte, next)))
             } else {
                 val error = Token.Error("Constant value not found", next.line, next.column, next.length)
@@ -1230,15 +1230,7 @@ private fun ParserContext.consumeMacroDefArguments(): List<Token> {
 
 private fun ParserContext.defineMonitor(): ParsedToken {
     val monitor = tokenProvider.consume<Token.Moniter>()
-    val identifier = tokenProvider.consume<Token>()
-
-    if (identifier is Token.Identifier) {
-        if (defined(identifier.name)) {
-            val errorToken =
-                Token.Error("Monitor already defined", identifier.line, identifier.column, identifier.length)
-            return (ParsedToken(ParsedTokenType.Error, listOf(monitor, errorToken)))
-        }
-    }
+    val identifier = tokenProvider.consume<Token.Identifier>()
 
     val value = tokenProvider.consume<Token>()
 
@@ -1246,9 +1238,15 @@ private fun ParserContext.defineMonitor(): ParsedToken {
         return (ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
     } else if (value is Token.StringToken) {
         return (ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+    } else if (value is Token.Identifier){
+        if (defined(value.name)) {
+            return (ParsedToken(ParsedTokenType.Monitor, listOf(monitor, identifier, value)))
+        } else {
+            val errorToken = Token.Error("Constant value not found", value.line, value.column, value.length)
+            return (ParsedToken(ParsedTokenType.Error, listOf(monitor, identifier, errorToken)))
+        }
     } else {
         val errorToken = Token.Error("Expected String or Number", value.line, value.column, value.length)
-
         return (ParsedToken(ParsedTokenType.Error, listOf(monitor, identifier, errorToken)))
     }
 

@@ -580,8 +580,8 @@ class Chip8SyntaxTests {
     @Test
     fun `big files should parse without errors`() {
 
-            val programUri = URI.create(Res.getUri("files/examples/xomusicplayer.8o"))
-            println("Parsing xomusicplayer...")
+            val programUri = URI.create(Res.getUri("files/examples/chicken.8o"))
+            println("Parsing chicken...")
             val program = Paths.get(programUri).toFile().readText()
             val tokens = parse(program)
             tokens.parsedTokens.filter {it.type == ParsedTokenType.Error}.forEach { println(it); println(it.tokens.joinToString(" ") { it.toString()})}
