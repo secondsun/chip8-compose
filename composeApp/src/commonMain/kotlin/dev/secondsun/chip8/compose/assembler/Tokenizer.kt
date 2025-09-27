@@ -296,12 +296,10 @@ e.printStackTrace()
     }
 
 
-    fun consumeIdentifierOrDirectiveOrRegister() {
+    fun consumeIdentifierOrDirective() {
         val startColumn = column
         val identifier = consumeIdentifierTokens();
-//        if (REGISTERS.contains(identifier.lowercase())) {
-//            tokens.add(Token.makeRegister(identifier, line, startColumn))
-//        } else
+
         if (DIRECTIVES.contains(identifier)) {
             tokens.add(Token.makeDirective(identifier, line, startColumn))
         } else if (identifier == "exit") {
@@ -629,7 +627,7 @@ e.printStackTrace()
         if (character == ':') { //Start directive
             val nextToken = peekNextWord()
             if (DIRECTIVES.contains(":$nextToken")) {
-                consumeIdentifierOrDirectiveOrRegister()
+                consumeIdentifierOrDirective()
             } else {
                 colon()
             }
@@ -638,7 +636,7 @@ e.printStackTrace()
         } else if (character.isWhitespace()) { //consume whitespace
             consumeWhitespace()
         } else if (character.isLetter()) { // consume identifier
-            consumeIdentifierOrDirectiveOrRegister()
+            consumeIdentifierOrDirective()
         } else if (character == '-' || character == '+') {
             val nextCharacter = peekNextCharacter()
             val next = peekNextWord()
