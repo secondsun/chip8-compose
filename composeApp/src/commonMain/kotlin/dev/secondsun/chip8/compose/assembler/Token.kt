@@ -724,7 +724,7 @@ sealed interface Token {
             get() = 1
     }
 
-    data class ForwardIdentifier(val name: String, override val line: Int, override val column: Int) : Token {
+    data class ForwardIdentifier(val name: String, override val line: Int, override val column: Int, val addr: Int) : Token {
         override val type: TokenType
             get() = TokenType.ForwardIdentifier
         override val length: Int

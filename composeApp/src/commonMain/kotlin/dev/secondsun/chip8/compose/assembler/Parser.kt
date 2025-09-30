@@ -751,7 +751,21 @@ class ParserContext(program: List<Token>, source:String) : ParserOutput {
             is Token.Colon ->
                 defineLabel().ifCompiles {
                     var target = this.here();
-                    var label
+                    val label = (it.tokens[1] as Token.Identifier).name
+                    if ((target == 0x202 || target == 0x200) && (label == "main")) {
+                        this.hasMain = false;
+                        this.hereaddr = 0x200;
+                        this.rom.remove(0); // erase reserved jump
+                        this.rom.remove(1);
+                        target = this.here();
+                    }
+                    this.labels[label] = IntExpression(listOf(Token.Number(target, it.tokens[1].line, it.tokens[1].column, it.tokens[1].length)))
+                    if (forwards.containsKey(label)) {
+                        forwards[label]!!.forEach {forwardToken ->
+                            val addr = forwardToken.addr
+
+                        }
+                    }
                 }
 
             is Token.Const -> defineConstant()
