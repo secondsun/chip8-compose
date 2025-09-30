@@ -1,6 +1,7 @@
 package dev.secondsun.chip8.compose.assembler
 
 class CompilerContext(val parsedProgram: ParserOutput, val source: String) {
+    var dict = mutableMapOf<String,Int>()//LabelToAddress
     var aliases = mutableMapOf<String, Int>()//Registers
     var rom = mutableMapOf<Int, Int?>()//Addr, byteValue
     var dbginfo = DebugInfo(source)
@@ -10,7 +11,7 @@ class CompilerContext(val parsedProgram: ParserOutput, val source: String) {
     var xo = false
     var pos: ParsedToken = parsedProgram.parsedTokens[0]
 
-    var dict = mutableMapOf<String,Int>()//LabelToAddress
+
 
     fun compile() {
         aliases["unpack-hi"] = 0x0
