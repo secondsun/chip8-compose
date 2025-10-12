@@ -60,6 +60,7 @@ class ParserContext(program: List<Token>, source:String) : ParserOutput {
     val loops = ArrayDeque<Pair<ParsedToken, Int>>()
     val whiles = ArrayDeque<ParsedToken?>()
     val forwards = mutableMapOf<String, MutableList<Token.ForwardIdentifier>>()
+    val longForwards = mutableMapOf<Int, Boolean>()
 
     fun setup() {
         resolvedAliases["unpack-hi"] = 0x0
@@ -760,11 +761,34 @@ class ParserContext(program: List<Token>, source:String) : ParserOutput {
                         target = this.here();
                     }
                     this.labels[label] = IntExpression(listOf(Token.Number(target, it.tokens[1].line, it.tokens[1].column, it.tokens[1].length)))
+
                     if (forwards.containsKey(label)) {
                         forwards[label]!!.forEach {forwardToken ->
                             val addr = forwardToken.addr
-
+                            if (this.longForwards[addr]?:false && (this.rom[addr - 0x200]?.and(0xF0)) == 0x60) {
+                            // :unpack long target
+                            this.rom[addr - 0x1FF] = ((target shr 8) and 0xFF)
+                            this.rom[addr - 0x1FD] = (target and 0xFF)
                         }
+                            else if (this.longForwards[addr]?:false) {
+                            // i := long target
+                            this.rom[addr - 0x200] = ((target shr 8)and 0xFF);
+                            this.rom[addr - 0x1FF] = (target and 0xFF);
+                        }
+                        else if ((target and 0xFFF) != target) {
+                            throw RuntimeException("Value 0x${target.toString(16).uppercase()} for label '${label}' does not fit in 12 bits.");
+                        }
+                            else if ((this.rom[addr - 0x200]?.and(0xF0)) == 0x60) {
+                            // :unpack target
+                            this.rom[addr - 0x1FF] = (this.rom[addr - 0x1FF]?.and(0xF0))?.or((((target shr 8)and 0xF)))
+                            this.rom[addr - 0x1FD] = (target and 0xFF);
+                        }
+                            else {
+                            this.rom[addr - 0x200] = (this.rom[addr - 0x200]?.and(0xF0))?.or(((target shr 8) and 0xF));
+                            this.rom[addr - 0x1FF] = (target and 0xFF);
+                        }
+                        }
+                        forwards.remove(label)
                     }
                 }
 
